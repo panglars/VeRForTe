@@ -1,0 +1,20 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { getAllBoardsData } from "../lib/data";
+import { BoardList } from "../components/BoardList";
+
+// Fetch all board data
+const boardsData = await getAllBoardsData();
+---
+
+<Layout title="Home">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">Development Board Information</h1>
+
+    <p class="text-lg mb-4">
+      Browse our collection of development boards and their specifications.
+    </p>
+
+    <BoardList client:load boards={boardsData} />
+  </div>
+</Layout>
