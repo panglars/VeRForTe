@@ -1,72 +1,103 @@
 ---
+// src/pages/board/[product].astro
 import Layout from "../../layouts/Layout.astro";
-import { getAllBoardsData, type BoardData } from "../../lib/data";
+import { getAllBoardsData, getBoardData } from "../../lib/data";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
 } from "../../components/ui/card";
+import RemoteMarkdown from "../../components/RemoteMarkdown.astro";
 
 // Generate static paths for all boards
 export async function getStaticPaths() {
   const boardsData = await getAllBoardsData();
 
   return boardsData.map((board) => ({
-    params: { product: board.product },
-    props: { board },
+    params: { product: encodeURIComponent(board.product) },
+    props: { boardName: board.product },
   }));
 }
 
-// Get the board data from props
+// Get the board name from props and fetch the data
 interface Props {
-  board: BoardData;
+  boardName: string;
 }
 
-const { board } = Astro.props;
+const { boardName } = Astro.props;
+let board;
+let error = null;
+
+try {
+  board = await getBoardData(boardName);
+
+  if (!board) {
+    error = `Board information for "${boardName}" not found`;
+  }
+} catch (e) {
+  error = `Error loading board data: ${e.message}`;
+  console.error(error);
+}
 ---
 
-<Layout title={board.product}>
-  <div class="max-w-3xl mx-auto">
-    <a href="/" class="text-primary hover:underline mb-6 inline-block"
-      >← Back to All Boards</a
-    >
+<Layout title={board ? board.product : "Board Not Found"}>
+  <div class="max-w-4xl mx-auto">
+    <a href="/" class="text-primary hover:underline mb-6 inline-block">← Back to All Boards</a>
 
-    <Card className="mb-8">
-      <CardHeader>
-        <CardTitle class="text-2xl">{board.product}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 class="text-sm font-medium text-muted-foreground">CPU</h3>
-              <p class="text-lg">{board.cpu}</p>
-            </div>
-            <div>
-              <h3 class="text-sm font-medium text-muted-foreground">
-                CPU Core
-              </h3>
-              <p class="text-lg">{board.cpu_core}</p>
-            </div>
-          </div>
+    {
+      error ? (
+        <div class="p-6 border border-red-300 bg-red-50 text-red-700 rounded-md">
+          <h1 class="text-2xl font-bold mb-4">Error</h1>
+          <p>{error}</p>
         </div>
-      </CardContent>
-    </Card>
+      ) : (
+        <>
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle class="text-2xl">{board.product}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 class="text-sm font-medium text-muted-foreground">
+                      CPU
+                    </h3>
+                    <p class="text-lg">{board.cpu}</p>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-medium text-muted-foreground">
+                      CPU Core
+                    </h3>
+                    <p class="text-lg">{board.cpu_core}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-    <div class="mt-8">
-      <h2 class="text-xl font-semibold mb-4">Additional Information</h2>
-      <p class="text-muted-foreground">
-        This information was fetched from the
-        <a
-          href={`https://github.com/ruyisdk/support-matrix/blob/main/${board.product}/README.md`}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="text-primary hover:underline"
-        >
-          RuyiSDK Support Matrix Repository
-        </a>.
-      </p>
-    </div>
+          <RemoteMarkdown
+            url={board.readmeUrl}
+            showToc={true}
+            repoPath={`ruyisdk/support-matrix/blob/main/${boardName}`}
+          />
+
+          <div class="mt-8">
+            <p class="text-sm text-muted-foreground">
+              Source:
+              <a
+                href={`https://github.com/ruyisdk/support-matrix/blob/main/${boardName}/README.md`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-primary hover:underline"
+              >
+                RuyiSDK Support Matrix Repository
+              </a>
+            </p>
+          </div>
+        </>
+      )
+    }
   </div>
 </Layout>

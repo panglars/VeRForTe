@@ -1,3 +1,4 @@
+// src/components/BoardList.tsx
 import { useState } from "react";
 import {
   Card,

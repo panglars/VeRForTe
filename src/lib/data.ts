@@ -1,7 +1,10 @@
+// Interface for board data
 export interface BoardData {
   product: string;
   cpu: string;
   cpu_core: string;
+  readmeUrl: string; // URL to the raw README.md file
+  boardDir: string;
 }
 
 /**
@@ -14,10 +17,10 @@ export async function getBoardData(
 ): Promise<BoardData | null> {
   try {
     // Construct the URL to the raw README.md file
-    const url = `https://raw.githubusercontent.com/ruyisdk/support-matrix/main/${boardName}/README.md`;
+    const readmeUrl = `https://raw.githubusercontent.com/ruyisdk/support-matrix/main/${boardName}/README.md`;
 
     // Fetch the README content
-    const response = await fetch(url);
+    const response = await fetch(readmeUrl);
 
     if (!response.ok) {
       console.error(
@@ -33,15 +36,12 @@ export async function getBoardData(
     const cpu = extractMetadata(content, "cpu");
     const cpu_core = extractMetadata(content, "cpu_core");
 
-    if (!product) {
-      console.error(`Product information not found for board ${boardName}`);
-      return null;
-    }
-
     return {
-      product,
+      product: product || "Not specified",
       cpu: cpu || "Not specified",
       cpu_core: cpu_core || "Not specified",
+      readmeUrl: readmeUrl,
+      boardDir: boardName || "Not specified",
     };
   } catch (error) {
     console.error(`Error fetching board data for ${boardName}:`, error);
