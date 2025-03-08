@@ -1,5 +1,4 @@
 ---
-// src/pages/board/[product].astro
 import Layout from "../../layouts/Layout.astro";
 import { getAllBoardsData, getBoardData } from "../../lib/data";
 import {
@@ -15,25 +14,23 @@ export async function getStaticPaths() {
   const boardsData = await getAllBoardsData();
 
   return boardsData.map((board) => ({
-    params: { product: encodeURIComponent(board.product) },
-    props: { boardName: board.product },
+    params: { dir: board.dir },
+    props: { boardDir: board.dir },
   }));
 }
 
 // Get the board name from props and fetch the data
-interface Props {
-  boardName: string;
-}
-
-const { boardName } = Astro.props;
+const { boardDir } = Astro.props;
 let board;
 let error = null;
 
 try {
-  board = await getBoardData(boardName);
+  board = await getBoardData(boardDir);
+
+  console.log(board);
 
   if (!board) {
-    error = `Board information for "${boardName}" not found`;
+    error = `Board information for "${boardDir}" not found`;
   }
 } catch (e) {
   error = `Error loading board data: ${e.message}`;
@@ -43,7 +40,9 @@ try {
 
 <Layout title={board ? board.product : "Board Not Found"}>
   <div class="max-w-4xl mx-auto">
-    <a href="/" class="text-primary hover:underline mb-6 inline-block">← Back to All Boards</a>
+    <a href="/" class="text-primary hover:underline mb-6 inline-block"
+      >← Back to All Boards</a
+    >
 
     {
       error ? (
@@ -55,7 +54,7 @@ try {
         <>
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle class="text-2xl">{board.product}</CardTitle>
+              <CardTitle className="text-2xl">{board.product}</CardTitle>
             </CardHeader>
             <CardContent>
               <div class="space-y-4">
@@ -80,14 +79,14 @@ try {
           <RemoteMarkdown
             url={board.readmeUrl}
             showToc={true}
-            repoPath={`ruyisdk/support-matrix/blob/main/${boardName}`}
+            repoPath={`ruyisdk/support-matrix/blob/main/${boardDir}`}
           />
 
           <div class="mt-8">
             <p class="text-sm text-muted-foreground">
               Source:
               <a
-                href={`https://github.com/ruyisdk/support-matrix/blob/main/${boardName}/README.md`}
+                href={`https://github.com/ruyisdk/support-matrix/blob/main/${boardDir}/README.md`}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-primary hover:underline"

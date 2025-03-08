@@ -3,28 +3,28 @@ export interface BoardData {
   product: string;
   cpu: string;
   cpu_core: string;
-  readmeUrl: string; // URL to the raw README.md file
-  boardDir: string;
+  readmeUrl: string;
+  dir: string;
 }
 
 /**
  * Fetches board data from GitHub repository
- * @param boardName The name of the board to fetch data for
+ * @param boardDir The name of the board to fetch data for
  * @returns Promise with board data or null if not found
  */
 export async function getBoardData(
-  boardName: string,
+  boardDir: string,
 ): Promise<BoardData | null> {
   try {
     // Construct the URL to the raw README.md file
-    const readmeUrl = `https://raw.githubusercontent.com/ruyisdk/support-matrix/main/${boardName}/README.md`;
+    const readmeUrl = `https://raw.githubusercontent.com/ruyisdk/support-matrix/main/${boardDir}/README.md`;
 
     // Fetch the README content
     const response = await fetch(readmeUrl);
 
     if (!response.ok) {
       console.error(
-        `Failed to fetch data for board ${boardName}: ${response.statusText}`,
+        `Failed to fetch data for board ${boardDir}: ${response.statusText}`,
       );
       return null;
     }
@@ -41,10 +41,10 @@ export async function getBoardData(
       cpu: cpu || "Not specified",
       cpu_core: cpu_core || "Not specified",
       readmeUrl: readmeUrl,
-      boardDir: boardName || "Not specified",
+      dir: boardDir || "Not specified",
     };
   } catch (error) {
-    console.error(`Error fetching board data for ${boardName}:`, error);
+    console.error(`Error fetching board data for ${boardDir}:`, error);
     return null;
   }
 }
@@ -84,8 +84,15 @@ export async function getAllBoards(): Promise<string[]> {
 
     // Filter for directories only
     const boards = contents
-      .filter((item: any) => item.type === "dir")
+      .filter(
+        (item: any) =>
+          item.type === "dir" &&
+          item.name !== ".github" &&
+          item.name !== "assets",
+      )
       .map((item: any) => item.name);
+
+    // console.log(boards);
 
     return boards;
   } catch (error) {

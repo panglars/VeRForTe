@@ -46,14 +46,11 @@ export function BoardList({ boards }: BoardListProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredBoards.map((board) => (
-          <Card
-            key={board.product}
-            className="hover:shadow-lg transition-shadow"
-          >
+          <Card key={board.dir} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle>
                 <a
-                  href={`/board/${encodeURIComponent(board.product)}`}
+                  href={`/board/${encodeURIComponent(board.dir)}`}
                   className="hover:underline"
                 >
                   {board.product}
@@ -64,7 +61,7 @@ export function BoardList({ boards }: BoardListProps) {
             <CardContent>
               <p>CPU Core: {board.cpu_core}</p>
               <a
-                href={`/board/${encodeURIComponent(board.product)}`}
+                href={`/board/${encodeURIComponent(board.dir)}`}
                 className="block mt-4 text-primary hover:underline"
               >
                 View Details →
