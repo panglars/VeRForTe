@@ -1,0 +1,205 @@
+---
+export interface Props {
+  boardDir: string;
+  className?: string;
+  showToc?: boolean;
+  osFilter?: string;
+  osList?: Array<{ linkName: string; systemDir: string; fileName?: string }>;
+}
+
+const {
+  boardDir,
+  className = "",
+  showToc = true,
+  osFilter = null,
+  osList = [],
+} = Astro.props;
+
+// Variables to store content and state
+let content = "";
+let osContent = "";
+let osDetails = [];
+let testResults = [];
+let isLoading = true;
+let error = null;
+
+try {
+  // If osFilter is provided, get specific OS content
+  if (osFilter) {
+  } else {
+    // If no osFilter, load OS details for each system in osList
+    for (const os of osList) {
+      osDetails.push({
+        systemDir: os.systemDir,
+        linkName: os.linkName,
+        fileName: os.fileName,
+      });
+    }
+
+    // Get board main README for test results
+    try {
+      const boardReadmePath = `/support-matrix/${boardDir}/README.md`;
+      const boardReadmeFiles = import.meta.glob("/support-matrix/*/README.md", {
+        query: "?raw",
+        import: "default",
+      });
+      const importBoardReadme = boardReadmeFiles[boardReadmePath];
+
+      if (importBoardReadme) {
+        content = await importBoardReadme();
+        content = content.replace(/^---[\s\S]*?---\s*/m, "");
+
+        // Extract Test Results section
+        const testResultsSection = content.match(
+          /## Test Results\s+([\s\S]*?)(?=##|$)/,
+        );
+        if (testResultsSection && testResultsSection[1]) {
+          // Parse the markdown table
+          const tableLines = testResultsSection[1]
+            .split("\n")
+            .filter((line) => line.trim());
+
+          // Skip the header and separator lines
+          if (tableLines.length > 2) {
+            // Process each row of the table
+            for (let i = 2; i < tableLines.length; i++) {
+              const row = tableLines[i];
+              const columns = row
+                .split("|")
+                .map((col) => col.trim())
+                .filter((col) => col);
+
+              if (columns.length >= 3) {
+                const category = columns[0];
+                const packageName = columns[1];
+                const testResult = columns[2];
+
+                // Extract link from test result if available
+                const linkMatch = testResult.match(/\[(.*?)\]\((.*?)\)/);
+                const result = linkMatch ? linkMatch[1] : testResult;
+                const reportLink = linkMatch ? linkMatch[2] : null;
+
+                testResults.push({
+                  category,
+                  packageName,
+                  result,
+                  reportLink,
+                });
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error(`Error loading test results: ${e}`);
+    }
+  }
+} catch (e: unknown) {
+  error = `Error loading data: ${e instanceof Error ? e.message : String(e)}`;
+  console.error(error);
+} finally {
+  isLoading = false;
+}
+
+// Determine which content to display
+const displayContent = osFilter ? osContent : content;
+---
+
+{
+  isLoading && (
+    <div class="p-4 text-center">
+      <div
+        class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+        role="status"
+      >
+        <span class="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+          Loading...
+        </span>
+      </div>
+      <p class="mt-2 text-gray-600">Loading content...</p>
+    </div>
+  )
+}
+
+{
+  !isLoading && error && (
+    <div class="p-4 border border-red-300 bg-red-50 text-red-700 rounded-md">
+      {error}
+    </div>
+  )
+}
+
+{
+  !isLoading && (
+    <div
+      class={`${className} ${showToc ? "lg:grid lg:grid-cols-4 gap-8" : ""}`}
+    >
+      <div class={showToc ? "lg:col-span-3" : ""}>
+        {/* Display OS list with enhanced details if not filtered */}
+        {!osFilter && osDetails.length > 0 && (
+          <div class="mb-8">
+            <div class="p-4 bg-gray-50 rounded-lg mb-4">
+              <h3 class="text-lg font-semibold mb-2">Operating Systems</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {osDetails.map((os) => (
+                  <div class="border border-gray-200 rounded-md p-3 bg-white">
+                    <h4 class="font-medium text-lg mb-2">
+                      <a
+                        href={`/board/${boardDir}/${os.linkName}`}
+                        class="text-blue-600 hover:underline"
+                      >
+                        {os.linkName}
+                      </a>
+                    </h4>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Test Results Section */}
+            {testResults.length > 0 && (
+              <div class="p-4 bg-gray-50 rounded-lg mb-4">
+                <h3 class="text-lg font-semibold mb-2">Test Results</h3>
+                <div class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100">
+                      <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Software Category
+                        </th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Test Result
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                      {testResults.map((result) => (
+                        <tr>
+                          <td class="px-4 py-2 whitespace-nowrap text-sm">
+                            {result.category}
+                          </td>
+                          <td class="px-4 py-2 whitespace-nowrap text-sm">
+                            {result.reportLink ? (
+                              <a
+                                href={result.reportLink}
+                                class="text-blue-600 hover:underline"
+                              >
+                                {result.result}
+                              </a>
+                            ) : (
+                              result.result
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

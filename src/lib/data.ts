@@ -7,7 +7,10 @@ export interface BoardData {
 }
 
 // Import all README.md files from support-matrix at build time
-const readmeFiles = import.meta.glob('/support-matrix/*/README.md', { as: 'raw' });
+const readmeFiles = import.meta.glob("/support-matrix/*/README.md", {
+  query: "?raw",
+  import: "default",
+});
 
 /**
  * Reads board data from local support-matrix directory
@@ -20,19 +23,19 @@ export async function getBoardData(
   try {
     // Construct the path to the README.md file
     const readmePath = `/support-matrix/${boardDir}/README.md`;
-    
+
     // Get the import function for this specific README file
     const importReadme = readmeFiles[readmePath];
-    
+
     if (!importReadme) {
       console.error(`README file not found for board ${boardDir}`);
       return null;
     }
-    
+
     try {
       // Load the README content
       const content = await importReadme();
-      
+
       // Extract metadata from the content
       const product = extractMetadata(content, "product");
       const cpu = extractMetadata(content, "cpu");
@@ -76,15 +79,16 @@ export async function getAllBoards(): Promise<string[]> {
   try {
     // Extract board names from the paths of all README files
     const boards = Object.keys(readmeFiles)
-      .map(path => {
+      .map((path) => {
         // Extract the board name from the path
         const match = path.match(/\/support-matrix\/([^\/]+)\/README\.md$/);
         return match ? match[1] : null;
       })
-      .filter((name): name is string => 
-        name !== null && name !== '.github' && name !== 'assets'
+      .filter(
+        (name): name is string =>
+          name !== null && name !== ".github" && name !== "assets",
       );
-    
+
     return boards;
   } catch (error) {
     console.error("Error fetching all boards:", error);

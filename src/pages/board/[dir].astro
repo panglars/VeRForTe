@@ -7,7 +7,7 @@ import {
   CardTitle,
   CardContent,
 } from "../../components/ui/card";
-import BoardMarkdown from "@/components/BoardMarkdown.astro";
+import SystemList from "@/components/SystemList.astro";
 
 // Generate static paths for all boards
 export async function getStaticPaths() {
@@ -23,12 +23,38 @@ export async function getStaticPaths() {
 const { boardDir } = Astro.props;
 let board;
 let error = null;
+let osList = [];
 
 try {
   board = await getBoardData(boardDir);
 
   if (!board) {
     error = `Board information for "${boardDir}" not found`;
+  } else {
+    const boardReadmePath = `/support-matrix/${boardDir}/README.md`;
+    const boardReadmeFiles = import.meta.glob("/support-matrix/*/README.md", {
+      query: "?raw",
+      import: "default",
+    });
+
+    if (boardReadmeFiles[boardReadmePath]) {
+      const content = await boardReadmeFiles[boardReadmePath]();
+
+      const linkRegex = /\[([\w\-_]+)\]:\s*\.\/([\w\-_]+)\/([\w\-_]+)\.md/g;
+      const matches = [...content.matchAll(linkRegex)];
+
+      osList = matches.map((match) => {
+        const linkName = match[1];
+        const systemDir = match[2];
+        const fileName = match[3];
+
+        return {
+          systemDir,
+          linkName,
+          fileName,
+        };
+      });
+    }
   }
 } catch (e) {
   error = `Error loading board data: ${e instanceof Error ? e.message : String(e)}`;
@@ -74,10 +100,7 @@ try {
             </CardContent>
           </Card>
 
-          <BoardMarkdown
-            boardDir={boardDir}
-            showToc={true}
-          />
+          <SystemList boardDir={boardDir} showToc={true} osList={osList} />
 
           <div class="mt-8">
             <p class="text-sm text-muted-foreground">
@@ -88,7 +111,7 @@ try {
                 rel="noopener noreferrer"
                 class="text-primary hover:underline"
               >
-                RuyiSDK Support Matrix Repository
+                Support Matrix
               </a>
             </p>
           </div>
