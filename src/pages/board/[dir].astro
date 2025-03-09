@@ -7,7 +7,7 @@ import {
   CardTitle,
   CardContent,
 } from "../../components/ui/card";
-import RemoteMarkdown from "../../components/RemoteMarkdown.astro";
+import BoardMarkdown from "@/components/BoardMarkdown.astro";
 
 // Generate static paths for all boards
 export async function getStaticPaths() {
@@ -27,13 +27,11 @@ let error = null;
 try {
   board = await getBoardData(boardDir);
 
-  console.log(board);
-
   if (!board) {
     error = `Board information for "${boardDir}" not found`;
   }
 } catch (e) {
-  error = `Error loading board data: ${e.message}`;
+  error = `Error loading board data: ${e instanceof Error ? e.message : String(e)}`;
   console.error(error);
 }
 ---
@@ -54,7 +52,7 @@ try {
         <>
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="text-2xl">{board.product}</CardTitle>
+              <CardTitle className="text-2xl">{board!.product}</CardTitle>
             </CardHeader>
             <CardContent>
               <div class="space-y-4">
@@ -63,23 +61,22 @@ try {
                     <h3 class="text-sm font-medium text-muted-foreground">
                       CPU
                     </h3>
-                    <p class="text-lg">{board.cpu}</p>
+                    <p class="text-lg">{board!.cpu}</p>
                   </div>
                   <div>
                     <h3 class="text-sm font-medium text-muted-foreground">
                       CPU Core
                     </h3>
-                    <p class="text-lg">{board.cpu_core}</p>
+                    <p class="text-lg">{board!.cpu_core}</p>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <RemoteMarkdown
-            url={board.readmeUrl}
+          <BoardMarkdown
+            boardDir={boardDir}
             showToc={true}
-            repoPath={`ruyisdk/support-matrix/blob/main/${boardDir}`}
           />
 
           <div class="mt-8">

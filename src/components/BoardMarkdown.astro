@@ -1,0 +1,101 @@
+---
+import { TableOfContents } from "./TableOfContents";
+
+export interface Props {
+  boardDir: string;
+  className?: string;
+  showToc?: boolean;
+}
+
+const {
+  boardDir,
+  className = "",
+  showToc = true,
+} = Astro.props;
+
+// Construct the path to the README.md file
+const readmePath = `/support-matrix/${boardDir}/README.md`;
+const repoPath = `ruyisdk/support-matrix/blob/main/${boardDir}`;
+
+// Import README file
+const readmeFiles = import.meta.glob('/support-matrix/*/README.md', { as: 'raw' });
+const importReadme = readmeFiles[readmePath];
+
+// Fetch the markdown content
+let content = "";
+let isLoading = true;
+let error = null;
+
+try {
+  if (importReadme) {
+    content = await importReadme();
+
+    // Remove the frontmatter section if it exists
+    content = content.replace(/^---[\s\S]*?---\s*/m, "");
+
+    // Fix relative image paths
+    // This regex looks for markdown image syntax ![alt](path) and replaces relative paths
+    content = content.replace(
+      /!\[(.*?)\]\((?!http|\/)(.*?)\)/g,
+      `![$1](https://raw.githubusercontent.com/${repoPath}/main/$2)`,
+    );
+  } else {
+    error = `Failed to load markdown for ${boardDir}`;
+    console.error(error);
+  }
+} catch (e: unknown) {
+  error = `Error loading markdown: ${e instanceof Error ? e.message : String(e)}`;
+  console.error(error);
+} finally {
+  isLoading = false;
+}
+---
+
+{
+  isLoading && (
+    <div class="p-4 text-center">
+      <div
+        class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+        role="status"
+      >
+        <span class="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
+          Loading...
+        </span>
+      </div>
+      <p class="mt-2 text-gray-600">Loading content...</p>
+    </div>
+  )
+}
+
+{
+  !isLoading && error && (
+    <div class="p-4 border border-red-300 bg-red-50 text-red-700 rounded-md">
+      {error}
+    </div>
+  )
+}
+
+{
+  !isLoading && content && (
+    <div
+      class={`${className} ${showToc ? "lg:grid lg:grid-cols-4 gap-8" : ""}`}
+    >
+      <div class={showToc ? "lg:col-span-3" : ""}>
+        <article class="prose prose-slate max-w-none">
+          <div set:html={content} />
+        </article>
+      </div>
+
+      {showToc && (
+        <div class="lg:col-span-1">
+          <div class="sticky top-8">
+            <TableOfContents
+              client:load
+              className="bg-gray-50 p-4 rounded-lg"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

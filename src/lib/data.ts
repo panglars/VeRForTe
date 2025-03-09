@@ -3,12 +3,14 @@ export interface BoardData {
   product: string;
   cpu: string;
   cpu_core: string;
-  readmeUrl: string;
   dir: string;
 }
 
+// Import all README.md files from support-matrix at build time
+const readmeFiles = import.meta.glob('/support-matrix/*/README.md', { as: 'raw' });
+
 /**
- * Fetches board data from GitHub repository
+ * Reads board data from local support-matrix directory
  * @param boardDir The name of the board to fetch data for
  * @returns Promise with board data or null if not found
  */
@@ -16,33 +18,36 @@ export async function getBoardData(
   boardDir: string,
 ): Promise<BoardData | null> {
   try {
-    // Construct the URL to the raw README.md file
-    const readmeUrl = `https://raw.githubusercontent.com/ruyisdk/support-matrix/main/${boardDir}/README.md`;
-
-    // Fetch the README content
-    const response = await fetch(readmeUrl);
-
-    if (!response.ok) {
-      console.error(
-        `Failed to fetch data for board ${boardDir}: ${response.statusText}`,
-      );
+    // Construct the path to the README.md file
+    const readmePath = `/support-matrix/${boardDir}/README.md`;
+    
+    // Get the import function for this specific README file
+    const importReadme = readmeFiles[readmePath];
+    
+    if (!importReadme) {
+      console.error(`README file not found for board ${boardDir}`);
       return null;
     }
+    
+    try {
+      // Load the README content
+      const content = await importReadme();
+      
+      // Extract metadata from the content
+      const product = extractMetadata(content, "product");
+      const cpu = extractMetadata(content, "cpu");
+      const cpu_core = extractMetadata(content, "cpu_core");
 
-    const content = await response.text();
-
-    // Extract metadata from the content
-    const product = extractMetadata(content, "product");
-    const cpu = extractMetadata(content, "cpu");
-    const cpu_core = extractMetadata(content, "cpu_core");
-
-    return {
-      product: product || "Not specified",
-      cpu: cpu || "Not specified",
-      cpu_core: cpu_core || "Not specified",
-      readmeUrl: readmeUrl,
-      dir: boardDir || "Not specified",
-    };
+      return {
+        product: product || "Not specified",
+        cpu: cpu || "Not specified",
+        cpu_core: cpu_core || "Not specified",
+        dir: boardDir || "Not specified",
+      };
+    } catch (readError) {
+      console.error(`Failed to read data for board ${boardDir}:`, readError);
+      return null;
+    }
   } catch (error) {
     console.error(`Error fetching board data for ${boardDir}:`, error);
     return null;
@@ -64,36 +69,22 @@ function extractMetadata(content: string, key: string): string | null {
 }
 
 /**
- * Fetches all available boards from the repository
+ * Gets all available boards from the local support-matrix directory
  * @returns Promise with an array of board names
  */
 export async function getAllBoards(): Promise<string[]> {
   try {
-    // Fetch the repository contents to get all directories (each directory is a board)
-    const url = "https://api.github.com/repos/ruyisdk/support-matrix/contents";
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      console.error(
-        `Failed to fetch repository contents: ${response.statusText}`,
+    // Extract board names from the paths of all README files
+    const boards = Object.keys(readmeFiles)
+      .map(path => {
+        // Extract the board name from the path
+        const match = path.match(/\/support-matrix\/([^\/]+)\/README\.md$/);
+        return match ? match[1] : null;
+      })
+      .filter((name): name is string => 
+        name !== null && name !== '.github' && name !== 'assets'
       );
-      return [];
-    }
-
-    const contents = await response.json();
-
-    // Filter for directories only
-    const boards = contents
-      .filter(
-        (item: any) =>
-          item.type === "dir" &&
-          item.name !== ".github" &&
-          item.name !== "assets",
-      )
-      .map((item: any) => item.name);
-
-    // console.log(boards);
-
+    
     return boards;
   } catch (error) {
     console.error("Error fetching all boards:", error);

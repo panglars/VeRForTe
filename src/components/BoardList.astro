@@ -1,0 +1,61 @@
+---
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "./ui/card";
+import type { BoardData } from "../lib/data";
+import SearchForm from "./SearchForm.astro";
+
+export interface Props {
+  boards: BoardData[];
+}
+
+const { boards } = Astro.props;
+---
+
+<div>
+  <SearchForm />
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {boards.map((board) => (
+      <div 
+        class="board-card" 
+        data-product={board.product}
+        data-cpu={board.cpu}
+        data-cpu-core={board.cpu_core}
+      >
+        <Card className="hover:shadow-lg transition-shadow h-full">
+          <CardHeader>
+            <CardTitle>
+              <a
+                href={`/board/${encodeURIComponent(board.dir)}`}
+                class="hover:underline"
+              >
+                {board.product}
+              </a>
+            </CardTitle>
+            <CardDescription>CPU: {board.cpu}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>CPU Core: {board.cpu_core}</p>
+            <a
+              href={`/board/${encodeURIComponent(board.dir)}`}
+              class="block mt-4 text-primary hover:underline"
+            >
+              View Details →
+            </a>
+          </CardContent>
+        </Card>
+      </div>
+    ))}
+  </div>
+
+  <div id="no-results" class="text-center p-8 border rounded-lg mt-8 hidden">
+    <p class="text-muted-foreground">
+      No boards found matching your search criteria.
+    </p>
+  </div>
+</div> 
