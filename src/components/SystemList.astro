@@ -36,7 +36,6 @@ try {
       });
     }
   } else {
-    console.log(osList);
     for (const os of osList) {
       const sysData = await getSysData(boardDir, os.systemDir);
       if (sysData) {
