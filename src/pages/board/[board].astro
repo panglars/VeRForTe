@@ -1,6 +1,11 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { getAllBoardsData, getBoardData } from "../../lib/data";
+import {
+  getAllBoardsData,
+  getBoardData,
+  getBoardSysDirs,
+  getSysData,
+} from "../../lib/data";
 import {
   Card,
   CardHeader,
@@ -14,7 +19,7 @@ export async function getStaticPaths() {
   const boardsData = await getAllBoardsData();
 
   return boardsData.map((board) => ({
-    params: { dir: board.dir },
+    params: { board: board.dir },
     props: { boardDir: board.dir },
   }));
 }
@@ -31,30 +36,11 @@ try {
   if (!board) {
     error = `Board information for "${boardDir}" not found`;
   } else {
-    const boardReadmePath = `/support-matrix/${boardDir}/README.md`;
-    const boardReadmeFiles = import.meta.glob("/support-matrix/*/README.md", {
-      query: "?raw",
-      import: "default",
-    });
-
-    if (boardReadmeFiles[boardReadmePath]) {
-      const content = await boardReadmeFiles[boardReadmePath]();
-
-      const linkRegex = /\[([\w\-_]+)\]:\s*\.\/([\w\-_]+)\/([\w\-_]+)\.md/g;
-      const matches = [...content.matchAll(linkRegex)];
-
-      osList = matches.map((match) => {
-        const linkName = match[1];
-        const systemDir = match[2];
-        const fileName = match[3];
-
-        return {
-          systemDir,
-          linkName,
-          fileName,
-        };
-      });
-    }
+    const sysDirs = await getBoardSysDirs(boardDir);
+    osList = sysDirs.map((sysDir) => ({
+      systemDir: sysDir,
+      linkName: sysDir,
+    }));
   }
 } catch (e) {
   error = `Error loading board data: ${e instanceof Error ? e.message : String(e)}`;

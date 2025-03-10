@@ -1,0 +1,165 @@
+---
+// Dynamic route for specific board and operating system
+import Layout from "../../../layouts/Layout.astro";
+import {
+  getAllBoardsData,
+  getBoardData,
+  getBoardAllSysData,
+  getSysData,
+} from "../../../lib/data";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "../../../components/ui/card";
+
+// Generate static paths for all boards and their operating systems
+export async function getStaticPaths() {
+  const boardsData = await getAllBoardsData();
+  const paths = [];
+
+  for (const board of boardsData) {
+    const boardDir = board.dir;
+    const sysDataList = await getBoardAllSysData(boardDir);
+
+    for (const sysData of sysDataList) {
+      paths.push({
+        params: {
+          board: boardDir,
+          system: sysData.dir,
+        },
+        props: {
+          boardDir,
+          sysDir: sysData.dir,
+        },
+      });
+    }
+  }
+
+  return paths;
+}
+
+const { boardDir, sysDir } = Astro.props;
+
+let board;
+let sysData;
+let error = null;
+let Content = null;
+
+try {
+  board = await getBoardData(boardDir);
+  if (!board) {
+    error = `Board information for "${boardDir}" not found`;
+  } else {
+    sysData = await getSysData(boardDir, sysDir);
+    if (!sysData) {
+      error = `System information for "${sysDir}" not found`;
+    } else {
+      try {
+        const readmePath = `/support-matrix/${boardDir}/${sysDir}/README.md`;
+        const mdFiles = import.meta.glob("/support-matrix/**/*.md");
+
+        if (mdFiles[readmePath]) {
+          const { Content: ImportedContent } = await mdFiles[readmePath]();
+          Content = ImportedContent;
+        } else {
+          error = `System README file not found: ${readmePath}`;
+        }
+      } catch (e) {
+        error = `Error loading system data: ${e instanceof Error ? e.message : String(e)}`;
+        console.error(error);
+      }
+    }
+  }
+} catch (e) {
+  error = `Error loading data: ${e instanceof Error ? e.message : String(e)}`;
+  console.error(error);
+}
+
+const title =
+  board && sysData ? `${sysData.sys} on ${board.product}` : "System Not Found";
+---
+
+<Layout title={title}>
+  <div class="max-w-4xl mx-auto">
+    <a
+      href={`/board/${boardDir}`}
+      class="text-primary hover:underline mb-6 inline-block"
+    >
+      ← Back to {board ? board.product : boardDir}
+    </a>
+
+    {
+      error ? (
+        <div class="p-6 border border-red-300 bg-red-50 text-red-700 rounded-md">
+          <h1 class="text-2xl font-bold mb-4">Error</h1>
+          <p>{error}</p>
+        </div>
+      ) : (
+        <>
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-2xl">
+                {sysData!.sys} on {board!.product}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <h3 class="text-sm font-medium text-muted-foreground">
+                      System Version
+                    </h3>
+                    <p class="text-lg">{sysData!.sys_ver}</p>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-medium text-muted-foreground">
+                      Status
+                    </h3>
+                    <p class="text-lg">{sysData!.status}</p>
+                  </div>
+                  {sysData!.sys_var && (
+                    <div>
+                      <h3 class="text-sm font-medium text-muted-foreground">
+                        System Variant
+                      </h3>
+                      <p class="text-lg">{sysData!.sys_var}</p>
+                    </div>
+                  )}
+                  <div>
+                    <h3 class="text-sm font-medium text-muted-foreground">
+                      Last Update
+                    </h3>
+                    <p class="text-lg">{sysData!.last_update}</p>
+                  </div>
+                </div>
+                <div class="prose max-w-none">
+                  {Content ? (
+                    <Content />
+                  ) : (
+                    <p>No detailed information available for this system.</p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div class="mt-8">
+            <p class="text-sm text-muted-foreground">
+              Source:
+              <a
+                href={`https://github.com/ruyisdk/support-matrix/blob/main/${boardDir}/${sysDir}/README.md`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-primary hover:underline"
+              >
+                Support Matrix
+              </a>
+            </p>
+          </div>
+        </>
+      )
+    }
+  </div>
+</Layout>

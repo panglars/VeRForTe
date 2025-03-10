@@ -1,4 +1,6 @@
 ---
+import { getSysData } from "@/lib/data";
+
 export interface Props {
   boardDir: string;
   className?: string;
@@ -26,72 +28,23 @@ let error = null;
 try {
   // If osFilter is provided, get specific OS content
   if (osFilter) {
-  } else {
-    // If no osFilter, load OS details for each system in osList
-    for (const os of osList) {
+    const sysData = await getSysData(boardDir, osFilter);
+    if (sysData) {
       osDetails.push({
-        systemDir: os.systemDir,
-        linkName: os.linkName,
-        fileName: os.fileName,
+        systemDir: sysData.dir,
+        linkName: sysData.sys,
       });
     }
-
-    // Get board main README for test results
-    try {
-      const boardReadmePath = `/support-matrix/${boardDir}/README.md`;
-      const boardReadmeFiles = import.meta.glob("/support-matrix/*/README.md", {
-        query: "?raw",
-        import: "default",
-      });
-      const importBoardReadme = boardReadmeFiles[boardReadmePath];
-
-      if (importBoardReadme) {
-        content = await importBoardReadme();
-        content = content.replace(/^---[\s\S]*?---\s*/m, "");
-
-        // Extract Test Results section
-        const testResultsSection = content.match(
-          /## Test Results\s+([\s\S]*?)(?=##|$)/,
-        );
-        if (testResultsSection && testResultsSection[1]) {
-          // Parse the markdown table
-          const tableLines = testResultsSection[1]
-            .split("\n")
-            .filter((line) => line.trim());
-
-          // Skip the header and separator lines
-          if (tableLines.length > 2) {
-            // Process each row of the table
-            for (let i = 2; i < tableLines.length; i++) {
-              const row = tableLines[i];
-              const columns = row
-                .split("|")
-                .map((col) => col.trim())
-                .filter((col) => col);
-
-              if (columns.length >= 3) {
-                const category = columns[0];
-                const packageName = columns[1];
-                const testResult = columns[2];
-
-                // Extract link from test result if available
-                const linkMatch = testResult.match(/\[(.*?)\]\((.*?)\)/);
-                const result = linkMatch ? linkMatch[1] : testResult;
-                const reportLink = linkMatch ? linkMatch[2] : null;
-
-                testResults.push({
-                  category,
-                  packageName,
-                  result,
-                  reportLink,
-                });
-              }
-            }
-          }
-        }
+  } else {
+    console.log(osList);
+    for (const os of osList) {
+      const sysData = await getSysData(boardDir, os.systemDir);
+      if (sysData) {
+        osDetails.push({
+          systemDir: sysData.dir,
+          linkName: os.linkName,
+        });
       }
-    } catch (e) {
-      console.error(`Error loading test results: ${e}`);
     }
   }
 } catch (e: unknown) {
@@ -155,48 +108,6 @@ const displayContent = osFilter ? osContent : content;
                 ))}
               </div>
             </div>
-
-            {/* Test Results Section */}
-            {testResults.length > 0 && (
-              <div class="p-4 bg-gray-50 rounded-lg mb-4">
-                <h3 class="text-lg font-semibold mb-2">Test Results</h3>
-                <div class="overflow-x-auto">
-                  <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-100">
-                      <tr>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Software Category
-                        </th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Test Result
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                      {testResults.map((result) => (
-                        <tr>
-                          <td class="px-4 py-2 whitespace-nowrap text-sm">
-                            {result.category}
-                          </td>
-                          <td class="px-4 py-2 whitespace-nowrap text-sm">
-                            {result.reportLink ? (
-                              <a
-                                href={result.reportLink}
-                                class="text-blue-600 hover:underline"
-                              >
-                                {result.result}
-                              </a>
-                            ) : (
-                              result.result
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
