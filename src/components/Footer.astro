@@ -1,5 +1,10 @@
+---
+import { siteConfig } from "@/config/site";
+---
+
 <footer class="border-t py-4 mt-8">
   <div class="container mx-auto px-4 text-center text-sm text-muted-foreground">
-    &copy; {new Date().getFullYear()} DevBoard Info. All rights reserved.
+    &copy; {new Date().getFullYear()}
+    {siteConfig.name}. All rights reserved.
   </div>
-</footer> 
+</footer>

@@ -17,7 +17,7 @@ interface TableOfContentsProps {
  */
 export function TableOfContents({
   className = "",
-  headingSelector = ".prose h1, .prose h2, .prose h3",
+  headingSelector = ".prose h2, .prose h3",
 }: TableOfContentsProps) {
   const [headings, setHeadings] = useState<TOCItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");

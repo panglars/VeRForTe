@@ -17,7 +17,16 @@ export default defineConfig({
   },
 
   markdown: {
+    shikiConfig: {
+    themes: {
+        light: 'one-light',
+        dark: 'one-dark-pro',
+      },
+      langAlias: {
+        'u-boot': 'bash',
+      },
+    },     
     remarkPlugins: [remarkGfm],
-    rehypePlugins: [rehypeSlug, [rehypeAutolinkHeadings, { behavior: "wrap" }]],
+    rehypePlugins: [[rehypeAutolinkHeadings, { behavior: "wrap" }]],
   },
 });

@@ -1,6 +1,17 @@
 ---
 import { getSysData } from "@/lib/data";
 
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
 export interface Props {
   boardDir: string;
   className?: string;
@@ -83,33 +94,29 @@ const displayContent = osFilter ? osContent : content;
 
 {
   !isLoading && (
-    <div
-      class={`${className} ${showToc ? "lg:grid lg:grid-cols-4 gap-8" : ""}`}
-    >
-      <div class={showToc ? "lg:col-span-3" : ""}>
-        {/* Display OS list with enhanced details if not filtered */}
-        {!osFilter && osDetails.length > 0 && (
-          <div class="mb-8">
-            <div class="p-4 bg-gray-50 rounded-lg mb-4">
-              <h3 class="text-lg font-semibold mb-2">Operating Systems</h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {osDetails.map((os) => (
-                  <div class="border border-gray-200 rounded-md p-3 bg-white">
-                    <h4 class="font-medium text-lg mb-2">
-                      <a
-                        href={`/board/${boardDir}/${os.linkName}`}
-                        class="text-blue-600 hover:underline"
-                      >
-                        {os.linkName}
-                      </a>
-                    </h4>
-                  </div>
-                ))}
-              </div>
+    <div class={showToc ? "lg:col-span-3" : ""}>
+      {/* Display OS list with enhanced details if not filtered */}
+      {!osFilter && osDetails.length > 0 && (
+        <div class="mb-8">
+          <div class="p-4 rounded-lg mb-4">
+            <h3 class="text-lg font-semibold mb-2">Operating Systems</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {osDetails.map((os) => (
+                <div class="border rounded-md p-3">
+                  <h4 class="font-medium text-lg mb-2">
+                    <a
+                      href={`/board/${boardDir}/${os.linkName}`}
+                      class="hover:underline"
+                    >
+                      {os.linkName}
+                    </a>
+                  </h4>
+                </div>
+              ))}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
