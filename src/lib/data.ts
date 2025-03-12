@@ -166,7 +166,7 @@ export async function getSysData(
 
       return {
         sys: frontmatter.sys || "Not specified",
-        sys_ver: frontmatter.sys_ver || "Not specified",
+        sys_ver: frontmatter.sys_ver,
         sys_var: frontmatter.sys_var,
         status: frontmatter.status || "Not specified",
         last_update: frontmatter.last_update || "Not specified",

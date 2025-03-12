@@ -6,6 +6,7 @@ import {
   CardDescription,
   CardContent,
 } from "./ui/card";
+
 import type { BoardData } from "../lib/data";
 import SearchForm from "./SearchForm.astro";
 
@@ -38,18 +39,19 @@ const { boards } = Astro.props;
                   {board.product}
                 </a>
               </CardTitle>
-              <CardDescription>
-                <div>CPU: {board.cpu}</div>
-                <div>CPU Core: {board.cpu_core}</div>
-              </CardDescription>
+              <CardDescription />
             </CardHeader>
             <CardContent>
-              <a
-                href={`/board/${encodeURIComponent(board.dir)}`}
-                class="block mt-2 text-primary hover:underline"
-              >
-                View Details →
-              </a>
+              <div class="space-y-2 text-sm text-muted-foreground">
+                <div class="flex items-center">
+                  <span class="w-24">CPU:</span>
+                  <span>{board.cpu}</span>
+                </div>
+                <div class="flex items-center">
+                  <span class="w-24">Core:</span>
+                  <span>{board.cpu_core}</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

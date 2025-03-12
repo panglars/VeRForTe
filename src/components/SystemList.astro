@@ -2,15 +2,12 @@
 import { getSysData } from "@/lib/data";
 
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "./ui/card";
 
 export interface Props {
   boardDir: string;
@@ -20,19 +17,12 @@ export interface Props {
   osList?: Array<{ linkName: string; systemDir: string; fileName?: string }>;
 }
 
-const {
-  boardDir,
-  className = "",
-  showToc = true,
-  osFilter = null,
-  osList = [],
-} = Astro.props;
+const { boardDir, showToc = true, osFilter = null, osList = [] } = Astro.props;
 
 // Variables to store content and state
 let content = "";
 let osContent = "";
 let osDetails = [];
-let testResults = [];
 let isLoading = true;
 let error = null;
 
@@ -51,7 +41,10 @@ try {
       const sysData = await getSysData(boardDir, os.systemDir);
       if (sysData) {
         osDetails.push({
-          systemDir: sysData.dir,
+          sysDir: sysData.dir,
+          sysStatus: sysData.status,
+          sysUpdate: sysData.last_update,
+          sysVer: sysData.sys_ver,
           linkName: os.linkName,
         });
       }
@@ -98,20 +91,38 @@ const displayContent = osFilter ? osContent : content;
       {/* Display OS list with enhanced details if not filtered */}
       {!osFilter && osDetails.length > 0 && (
         <div class="mb-8">
-          <div class="p-4 rounded-lg mb-4">
-            <h3 class="text-lg font-semibold mb-2">Operating Systems</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="rounded-lg mb-4">
+            <h3 class="text-xl font-semibold mb-2">Operating Systems</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               {osDetails.map((os) => (
-                <div class="border rounded-md p-3">
-                  <h4 class="font-medium text-lg mb-2">
-                    <a
-                      href={`/board/${boardDir}/${os.linkName}`}
-                      class="hover:underline"
-                    >
-                      {os.linkName}
-                    </a>
-                  </h4>
-                </div>
+                <Card className="hover:shadow-lg transition-shadow h-full">
+                  <CardHeader>
+                    <CardTitle>
+                      <a
+                        href={`/board/${boardDir}/${os.linkName}`}
+                        class="hover:underline"
+                      >
+                        {os.linkName}
+                      </a>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div class="space-y-2 text-sm text-muted-foreground">
+                      <div class="flex items-center">
+                        <span class="w-24">Status:</span>
+                        <span>{os.sysStatus}</span>
+                      </div>
+                      <div class="flex items-center">
+                        <span class="w-24">Version:</span>
+                        <span>{os.sysVer}</span>
+                      </div>
+                      <div class="flex items-center">
+                        <span class="w-24">Last Update:</span>
+                        <span>{os.sysUpdate}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>
