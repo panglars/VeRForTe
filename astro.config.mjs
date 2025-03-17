@@ -12,6 +12,11 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 export default defineConfig({
   integrations: [react()],
 
+  i18n: {
+    locales: ["en", "zh_CN"],
+    defaultLocale: "en",
+  },
+  
   vite: {
     plugins: [tailwindcss()],
   },
