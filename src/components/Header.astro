@@ -1,10 +1,12 @@
 ---
 import { siteConfig } from "@/config/site";
 import { ModeToggle } from "./ModeToggle";
+import { LangToggle } from "./LangToggle";
 import { getLangFromUrl, useTranslations } from "@/i18n/utils";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
+const currentPath = Astro.url.pathname;
 ---
 
 <script is:inline>
@@ -42,6 +44,9 @@ const t = useTranslations(lang);
         <a href={`/${lang}/update/`} class="mr-8 text-xl">{t("nav.update")}</a>
       </nav>
     </div>
-    <ModeToggle client:load />
+    <div>
+      <LangToggle client:load currentPath={currentPath} />
+      <ModeToggle client:load />
+    </div>
   </div>
 </header>
