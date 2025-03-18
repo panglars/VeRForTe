@@ -1,0 +1,101 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getAllBoardsData, getBoardData, getBoardSysDirs } from "@/lib/data";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import SystemList from "@/components/SystemList.astro";
+import { getLangFromUrl } from "@/i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+
+// Generate static paths for all boards
+export async function getStaticPaths() {
+  const boardsData = await getAllBoardsData();
+
+  return boardsData.map((board) => ({
+    params: { board: board.dir },
+    props: { boardDir: board.dir },
+  }));
+}
+
+// Get the board name from props and fetch the data
+const { boardDir } = Astro.props;
+let board;
+let error = null;
+let osList = [];
+
+try {
+  board = await getBoardData(boardDir);
+
+  if (!board) {
+    error = `Board information for "${boardDir}" not found`;
+  } else {
+    const sysDirs = await getBoardSysDirs(boardDir);
+    osList = sysDirs.map((sysDir) => ({
+      systemDir: sysDir,
+      linkName: sysDir,
+    }));
+  }
+} catch (e) {
+  error = `Error loading board data: ${e instanceof Error ? e.message : String(e)}`;
+  console.error(error);
+}
+---
+
+<Layout title={board ? board.product : "Board Not Found"}>
+  <div class="max-w-4xl mx-auto">
+    <a href={`/${lang}`} class="text-primary hover:underline mb-6 inline-block"
+      >← 返回首页</a
+    >
+
+    {
+      error ? (
+        <div class="p-6 border border-red-300 bg-red-50 text-red-700 rounded-md">
+          <h1 class="text-2xl font-bold mb-4">错误</h1>
+          <p>{error}</p>
+        </div>
+      ) : (
+        <>
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-2xl">{board!.product}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 class="text-sm font-medium text-muted-foreground">
+                      处理器
+                    </h3>
+                    <p class="text-lg">{board!.cpu}</p>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-medium text-muted-foreground">
+                      核心
+                    </h3>
+                    <p class="text-lg">{board!.cpu_core}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <SystemList boardDir={boardDir} showToc={true} osList={osList} />
+
+          <div class="mt-8">
+            <p class="text-sm text-muted-foreground">
+              来源:
+              <a
+                href={`https://github.com/ruyisdk/support-matrix/blob/main/${boardDir}/README_zh.md`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-primary hover:underline"
+              >
+                支持矩阵
+              </a>
+            </p>
+          </div>
+        </>
+      )
+    }
+  </div>
+</Layout>

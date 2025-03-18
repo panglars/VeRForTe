@@ -1,6 +1,10 @@
 ---
 import { siteConfig } from "@/config/site";
 import { ModeToggle } from "./ModeToggle";
+import { getLangFromUrl, useTranslations } from "@/i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
 <script is:inline>
@@ -28,13 +32,14 @@ import { ModeToggle } from "./ModeToggle";
 </script>
 
 <header class="border-b py-4">
-  <div class="container mx-auto px-4 justify-between md:flex">
+  <div class="container mx-auto px-8 justify-between md:flex">
     <div class="flex gap-4">
-      <a href="/" class="text-2xl font-bold mr-4">{siteConfig.name}</a>
       <nav class="items-center md:flex">
-        <a href="/sheet" class="mr-8 text-xl">Sheet</a>
-        <a href="/update" class="mr-8 text-xl">Update</a>
-        <a href={siteConfig.links.github} class="mr-8 text-xl">Github</a>
+        <a href={`/${lang}/`} class="text-xl font-bold mr-8"
+          >{siteConfig.name}</a
+        >
+        <a href={`/${lang}/sheet/`} class="mr-8 text-xl">{t("nav.table")}</a>
+        <a href={`/${lang}/update/`} class="mr-8 text-xl">{t("nav.update")}</a>
       </nav>
     </div>
     <ModeToggle client:load />

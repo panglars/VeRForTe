@@ -23,12 +23,9 @@ export default defineConfig({
 
   markdown: {
     shikiConfig: {
-    themes: {
-        light: 'one-light',
-        dark: 'one-dark-pro',
-      },
-      langAlias: {
-        'u-boot': 'bash',
+    theme: 'one-dark-pro',
+    langAlias: {
+        'u-boot': 'log',
       },
     },     
     remarkPlugins: [remarkGfm],

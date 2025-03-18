@@ -9,6 +9,12 @@ import {
   CardContent,
 } from "./ui/card";
 
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { getLangFromUrl, useTranslations } from "@/i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
 export interface Props {
   boardDir: string;
   className?: string;
@@ -92,14 +98,19 @@ const displayContent = osFilter ? osContent : content;
       {!osFilter && osDetails.length > 0 && (
         <div class="mb-8">
           <div class="rounded-lg mb-4">
-            <h3 class="text-xl font-semibold mb-2">Operating Systems</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               {osDetails.map((os) => (
                 <Card className="hover:shadow-lg transition-shadow h-full">
                   <CardHeader>
                     <CardTitle>
                       <a
-                        href={`/board/${boardDir}/${os.linkName}`}
+                        href={getRelativeLocaleUrl(
+                          lang,
+                          `board/${boardDir}/${os.linkName}`,
+                          {
+                            normalizeLocale: false,
+                          },
+                        )}
                         class="hover:underline"
                       >
                         {os.linkName}
@@ -109,15 +120,15 @@ const displayContent = osFilter ? osContent : content;
                   <CardContent>
                     <div class="space-y-2 text-sm text-muted-foreground">
                       <div class="flex items-center">
-                        <span class="w-24">Status:</span>
+                        <span class="w-24">{t("sys.status")}</span>
                         <span>{os.sysStatus}</span>
                       </div>
                       <div class="flex items-center">
-                        <span class="w-24">Version:</span>
+                        <span class="w-24">{t("sys.version")}</span>
                         <span>{os.sysVer}</span>
                       </div>
                       <div class="flex items-center">
-                        <span class="w-24">Last Update:</span>
+                        <span class="w-24">{t("sys.update")}</span>
                         <span>{os.sysUpdate}</span>
                       </div>
                     </div>

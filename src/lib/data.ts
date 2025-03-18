@@ -1,5 +1,5 @@
-// Interface for board data
-export interface BoardData {
+// Interface for board meta data
+export interface BoardMetaData {
   product: string;
   cpu: string;
   cpu_core: string;
@@ -7,7 +7,7 @@ export interface BoardData {
 }
 
 // Interface for system data
-export interface SysData {
+export interface SysMetaData {
   sys: string;
   sys_ver: string;
   sys_var: string | null;
@@ -30,7 +30,7 @@ const readmeFiles = import.meta.glob("/support-matrix/*/README.md", {
  */
 export async function getBoardData(
   boardDir: string,
-): Promise<BoardData | null> {
+): Promise<BoardMetaData | null> {
   try {
     // Construct the path to the README.md file
     const readmePath = `/support-matrix/${boardDir}/README.md`;
@@ -111,13 +111,13 @@ export async function getAllBoards(): Promise<string[]> {
  * Gets all board data for all available boards
  * @returns Promise with an array of board data
  */
-export async function getAllBoardsData(): Promise<BoardData[]> {
+export async function getAllBoardsData(): Promise<BoardMetaData[]> {
   const boards = await getAllBoards();
   const boardsDataPromises = boards.map((board) => getBoardData(board));
   const boardsData = await Promise.all(boardsDataPromises);
 
   // Filter out null values (boards that couldn't be fetched)
-  return boardsData.filter((data): data is BoardData => data !== null);
+  return boardsData.filter((data): data is BoardMetaData => data !== null);
 }
 
 // Import all system README.md files from support-matrix at build time
@@ -135,7 +135,7 @@ const sysReadmeFiles = import.meta.glob("/support-matrix/*/*/README.md", {
 export async function getSysData(
   boardDir: string,
   sysDir: string,
-): Promise<SysData | null> {
+): Promise<SysMetaData | null> {
   try {
     // Construct the path to the system README.md file
     const readmePath = `/support-matrix/${boardDir}/${sysDir}/README.md`;
@@ -195,34 +195,26 @@ export async function getSysData(
  * @returns The extracted frontmatter object or null if not found
  */
 function extractFrontmatter(content: string): Record<string, any> | null {
-  // Regular expression to match frontmatter between --- markers
-  const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---/;
-  const match = content.match(frontmatterRegex);
-
-  if (!match || !match[1]) {
-    return null;
-  }
-
-  const frontmatterText = match[1];
+  // Extract the frontmatter section between --- markers
+  const frontmatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
+  if (!frontmatterMatch) return null;
+  
   const frontmatter: Record<string, any> = {};
-
-  // Split by lines and process each key-value pair
-  frontmatterText.split("\n").forEach((line) => {
+  const frontmatterText = frontmatterMatch[1];
+  
+  // Process each line to extract key-value pairs
+  const lines = frontmatterText.split("\n");
+  for (const line of lines) {
     const keyValueMatch = line.match(/^([^:]+):\s*(.*)$/);
     if (keyValueMatch) {
-      const [, key, value] = keyValueMatch;
-      const trimmedKey = key.trim();
-      const trimmedValue = value.trim();
-
+      const key = keyValueMatch[1].trim();
+      const value = keyValueMatch[2].trim();
+      
       // Handle special values
-      if (trimmedValue === "null" || trimmedValue === "") {
-        frontmatter[trimmedKey] = null;
-      } else {
-        frontmatter[trimmedKey] = trimmedValue;
-      }
+      frontmatter[key] = (value === "null" || value === "") ? null : value;
     }
-  });
-
+  }
+  
   return frontmatter;
 }
 
@@ -260,20 +252,22 @@ export async function getBoardSysDirs(boardDir: string): Promise<string[]> {
  * @param boardDir The name of the board
  * @returns Promise with an array of system data
  */
-export async function getBoardAllSysData(boardDir: string): Promise<SysData[]> {
+export async function getBoardAllSysData(
+  boardDir: string,
+): Promise<SysMetaData[]> {
   const sysDirs = await getBoardSysDirs(boardDir);
   const sysDataPromises = sysDirs.map((sysDir) => getSysData(boardDir, sysDir));
   const sysData = await Promise.all(sysDataPromises);
 
   // Filter out null values (systems that couldn't be fetched)
-  return sysData.filter((data): data is SysData => data !== null);
+  return sysData.filter((data): data is SysMetaData => data !== null);
 }
 
 /**
  * Gets all system data for all available boards
  * @returns Promise with an array of system data
  */
-export async function getAllSysData(): Promise<SysData[]> {
+export async function getAllSysData(): Promise<SysMetaData[]> {
   const boards = await getAllBoards();
   const allSysDataPromises = boards.flatMap(async (boardDir) => {
     const sysDirs = await getBoardSysDirs(boardDir);
@@ -284,5 +278,5 @@ export async function getAllSysData(): Promise<SysData[]> {
   const allSysData = await Promise.all(allSysDataNestedPromises.flat());
 
   // Filter out null values (systems that couldn't be fetched)
-  return allSysData.filter((data): data is SysData => data !== null);
+  return allSysData.filter((data): data is SysMetaData => data !== null);
 }

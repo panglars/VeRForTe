@@ -7,12 +7,17 @@ import {
   CardContent,
 } from "./ui/card";
 
-import type { BoardData } from "../lib/data";
+import type { BoardMetaData } from "../lib/data";
 import SearchForm from "./SearchForm.astro";
+import { getLangFromUrl, useTranslations } from "@/i18n/utils";
+import { getRelativeLocaleUrl } from "astro:i18n";
 
 export interface Props {
-  boards: BoardData[];
+  boards: BoardMetaData[];
 }
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 
 const { boards } = Astro.props;
 ---
@@ -33,7 +38,9 @@ const { boards } = Astro.props;
             <CardHeader>
               <CardTitle>
                 <a
-                  href={`/board/${encodeURIComponent(board.dir)}`}
+                  href={getRelativeLocaleUrl(lang, `board/${board.dir}`, {
+                    normalizeLocale: false,
+                  })}
                   class="hover:underline"
                 >
                   {board.product}
@@ -44,11 +51,11 @@ const { boards } = Astro.props;
             <CardContent>
               <div class="space-y-2 text-sm text-muted-foreground">
                 <div class="flex items-center">
-                  <span class="w-24">CPU:</span>
+                  <span class="w-24">{t("cpu")}</span>
                   <span>{board.cpu}</span>
                 </div>
                 <div class="flex items-center">
-                  <span class="w-24">Core:</span>
+                  <span class="w-24">{t("core")}</span>
                   <span>{board.cpu_core}</span>
                 </div>
               </div>
