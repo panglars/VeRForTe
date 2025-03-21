@@ -47,34 +47,44 @@ const currentPath = Astro.url.pathname;
 </script>
 
 <header class="border-b py-4">
-  <div class="container mx-auto px-8 justify-between md:flex">
-    <div class="flex gap-4">
-      <nav class="items-center md:flex">
+  <div class="container mx-auto px-4 lg:max-w-4xl">
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center">
+      <div class="flex justify-between items-center">
         <a
           href={getRelativeLocaleUrl(lang, "", {
             normalizeLocale: false,
           })}
-          class="text-xl font-bold mr-8">{siteConfig.name}</a
+          class="text-xl font-bold">{siteConfig.name}</a
         >
 
+        <div class="flex items-center lg:hidden">
+          <LangToggle client:load currentPath={currentPath} />
+          <ModeToggle client:load />
+        </div>
+      </div>
+
+      <nav
+        class="flex flex-col lg:flex-row mt-4 lg:mt-0 space-y-4 lg:space-y-0"
+      >
         <a
           href={getRelativeLocaleUrl(lang, "sheet/", {
             normalizeLocale: false,
           })}
-          class="mr-8 text-xl">{t("nav.table")}</a
+          class="text-xl lg:mr-8">{t("nav.table")}</a
         >
 
         <a
           href={getRelativeLocaleUrl(lang, "update/", {
             normalizeLocale: false,
           })}
-          class="mr-8 text-xl">{t("nav.update")}</a
+          class="text-xl lg:mr-8">{t("nav.update")}</a
         >
       </nav>
-    </div>
-    <div>
-      <LangToggle client:load currentPath={currentPath} />
-      <ModeToggle client:load />
+
+      <div class="hidden lg:flex items-center">
+        <LangToggle client:load currentPath={currentPath} />
+        <ModeToggle client:load />
+      </div>
     </div>
   </div>
 </header>
