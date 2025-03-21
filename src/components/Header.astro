@@ -2,6 +2,7 @@
 import { siteConfig } from "@/config/site";
 import { ModeToggle } from "./ModeToggle";
 import { LangToggle } from "./LangToggle";
+import { getRelativeLocaleUrl } from "astro:i18n";
 import { getLangFromUrl, useTranslations } from "@/i18n/utils";
 
 const lang = getLangFromUrl(Astro.url);
@@ -37,11 +38,26 @@ const currentPath = Astro.url.pathname;
   <div class="container mx-auto px-8 justify-between md:flex">
     <div class="flex gap-4">
       <nav class="items-center md:flex">
-        <a href={`/${lang}/`} class="text-xl font-bold mr-8"
-          >{siteConfig.name}</a
+        <a
+          href={getRelativeLocaleUrl(lang, "", {
+            normalizeLocale: false,
+          })}
+          class="text-xl font-bold mr-8">{siteConfig.name}</a
         >
-        <a href={`/${lang}/sheet/`} class="mr-8 text-xl">{t("nav.table")}</a>
-        <a href={`/${lang}/update/`} class="mr-8 text-xl">{t("nav.update")}</a>
+
+        <a
+          href={getRelativeLocaleUrl(lang, "sheet/", {
+            normalizeLocale: false,
+          })}
+          class="mr-8 text-xl">{t("nav.table")}</a
+        >
+
+        <a
+          href={getRelativeLocaleUrl(lang, "update/", {
+            normalizeLocale: false,
+          })}
+          class="mr-8 text-xl">{t("nav.update")}</a
+        >
       </nav>
     </div>
     <div>
