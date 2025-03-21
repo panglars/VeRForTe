@@ -134,7 +134,11 @@ const title =
                     <p class="text-lg">{sysData!.last_update}</p>
                   </div>
                 </div>
-                <div class="prose prose-slate prose-h1:hidden dark:prose-invert max-w-none">
+                <div
+                  class="prose prose-slate prose-h1:hidden dark:prose-invert max-w-none 
+            prose-pre:whitespace-pre-wrap prose-pre:word-break-normal prose-pre:break-words
+            prose-a:break-words prose-a:overflow-wrap-anywhere prose-a:word-break-all"
+                >
                   {Content ? <Content /> : <p>没有可用于此系统的详细信息。</p>}
                 </div>
               </div>
