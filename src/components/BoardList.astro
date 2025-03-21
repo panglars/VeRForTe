@@ -8,7 +8,7 @@ import {
 } from "./ui/card";
 
 import type { BoardMetaData } from "../lib/data";
-import SearchForm from "./SearchForm.astro";
+import SearchBar from "./SearchBar.tsx";
 import { getLangFromUrl, useTranslations } from "@/i18n/utils";
 import { getRelativeLocaleUrl } from "astro:i18n";
 
@@ -23,7 +23,7 @@ const { boards } = Astro.props;
 ---
 
 <div>
-  <SearchForm />
+  <SearchBar client:load boards={boards} />
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {
