@@ -34,33 +34,31 @@ const { boards } = Astro.props;
           data-cpu={board.cpu}
           data-cpu-core={board.cpu_core}
         >
-          <Card className="hover:shadow-lg transition-shadow h-full">
-            <CardHeader>
-              <CardTitle>
-                <a
-                  href={getRelativeLocaleUrl(lang, `board/${board.dir}`, {
-                    normalizeLocale: false,
-                  })}
-                  class="hover:underline"
-                >
-                  {board.product}
-                </a>
-              </CardTitle>
-              <CardDescription />
-            </CardHeader>
-            <CardContent>
-              <div class="space-y-2 text-sm text-muted-foreground">
-                <div class="flex items-center">
-                  <span class="w-24">{t("cpu")}</span>
-                  <span>{board.cpu}</span>
+          <a
+            href={getRelativeLocaleUrl(lang, `board/${board.dir}`, {
+              normalizeLocale: false,
+            })}
+            class=""
+          >
+            <Card className="hover:shadow-lg hover:bg-muted transition-shadow h-full">
+              <CardHeader>
+                <CardTitle>{board.product}</CardTitle>
+                <CardDescription />
+              </CardHeader>
+              <CardContent>
+                <div class="space-y-2 text-sm text-muted-foreground">
+                  <div class="flex items-center">
+                    <span class="w-24">{t("cpu")}</span>
+                    <span>{board.cpu}</span>
+                  </div>
+                  <div class="flex items-center">
+                    <span class="w-24">{t("core")}</span>
+                    <span>{board.cpu_core}</span>
+                  </div>
                 </div>
-                <div class="flex items-center">
-                  <span class="w-24">{t("core")}</span>
-                  <span>{board.cpu_core}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </a>
         </div>
       ))
     }

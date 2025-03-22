@@ -100,40 +100,55 @@ const displayContent = osFilter ? osContent : content;
           <div class="rounded-lg mb-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               {osDetails.map((os) => (
-                <Card className="hover:shadow-lg transition-shadow h-full">
-                  <CardHeader>
-                    <CardTitle>
-                      <a
-                        href={getRelativeLocaleUrl(
-                          lang,
-                          `board/${boardDir}/${os.linkName}`,
-                          {
-                            normalizeLocale: false,
-                          },
-                        )}
-                        class="hover:underline"
-                      >
-                        {os.linkName}
-                      </a>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div class="space-y-2 text-sm text-muted-foreground">
-                      <div class="flex items-center">
-                        <span class="w-24">{t("sys.status")}</span>
-                        <span>{os.sysStatus}</span>
+                <a
+                  href={getRelativeLocaleUrl(
+                    lang,
+                    `board/${boardDir}/${os.linkName}`,
+                    {
+                      normalizeLocale: false,
+                    },
+                  )}
+                  class=""
+                >
+                  <Card className="hover:shadow-lg hover:bg-muted transition-shadow h-full">
+                    <CardHeader className="items-center">
+                      <CardTitle>{os.linkName}</CardTitle>
+                      {(() => {
+                        const status = os.sysStatus.toUpperCase();
+                        const statusClass =
+                          status === "GOOD"
+                            ? "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
+                            : status === "BASIC"
+                              ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
+                              : status === "CFH"
+                                ? "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
+                                : status === "CFT"
+                                  ? "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
+                                  : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100";
+
+                        return (
+                          <span
+                            class={`inline-block px-2 py-1 rounded-md font-medium ${statusClass}`}
+                          >
+                            {status}
+                          </span>
+                        );
+                      })()}
+                    </CardHeader>
+                    <CardContent>
+                      <div class="space-y-2 text-sm text-muted-foreground">
+                        <div class="flex items-center">
+                          <span class="w-24">{t("sys.version")}</span>
+                          <span>{os.sysVer}</span>
+                        </div>
+                        <div class="flex items-center">
+                          <span class="w-24">{t("sys.update")}</span>
+                          <span>{os.sysUpdate}</span>
+                        </div>
                       </div>
-                      <div class="flex items-center">
-                        <span class="w-24">{t("sys.version")}</span>
-                        <span>{os.sysVer}</span>
-                      </div>
-                      <div class="flex items-center">
-                        <span class="w-24">{t("sys.update")}</span>
-                        <span>{os.sysUpdate}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </a>
               ))}
             </div>
           </div>

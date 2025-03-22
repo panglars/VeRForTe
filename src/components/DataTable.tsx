@@ -67,7 +67,7 @@ const StatusCell = ({
 
   const statusElement = (
     <span
-      className={`inline-block px-2 py-1 rounded-full font-medium ${statusClass}`}
+      className={`inline-block px-2 py-1 rounded-md font-medium ${statusClass}`}
     >
       {status}
     </span>
