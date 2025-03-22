@@ -1,9 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   useReactTable,
+  getSortedRowModel,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -57,12 +58,12 @@ const StatusCell = ({
 
   const statusClass =
     status === "GOOD"
-      ? "bg-blue-100 text-blue-800"
+      ? "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
       : status === "BASIC"
-        ? "bg-green-100 text-green-800"
+        ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
         : status === "CFH"
-          ? "bg-red-100 text-red-800"
-          : "bg-gray-100 text-gray-800"; // CFT and others
+          ? "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
+          : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"; // CFT and others
 
   const statusElement = (
     <span
@@ -92,6 +93,8 @@ export default function DataTable({
   statusMatrix,
   categoryName,
 }: DataTableProps) {
+  const [sorting, setSorting] = useState([]);
+
   const columnHelper = createColumnHelper<any>();
 
   const columns = useMemo(() => {
@@ -99,6 +102,11 @@ export default function DataTable({
     const boardColumn = columnHelper.accessor("board", {
       header: "Board",
       cell: (info) => info.getValue().product,
+      sortingFn: (rowA, rowB) => {
+        return rowA.original.board.product.localeCompare(
+          rowB.original.board.product,
+        );
+      },
     });
 
     // Create system columns
@@ -117,6 +125,11 @@ export default function DataTable({
             />
           );
         },
+        sortingFn: (rowA, rowB) => {
+          const statusA = rowA.original.statuses[index] || "";
+          const statusB = rowB.original.statuses[index] || "";
+          return statusA.localeCompare(statusB);
+        },
       }),
     );
 
@@ -133,9 +146,20 @@ export default function DataTable({
     [boards, statusMatrix],
   );
 
+  const filteredData = useMemo(() => {
+    return data.filter((row) => {
+      return row.statuses.some((status) => status !== null && status !== "");
+    });
+  }, [data]);
+
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
     getCoreRowModel: getCoreRowModel(),
   });
 
@@ -150,32 +174,55 @@ export default function DataTable({
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className={header.id === "board" ? "min-w-[200px]" : ""}
+                    className={`${header.id === "board" ? "min-w-[200px]" : ""} ${header.column.getCanSort() ? "cursor-pointer select-none" : ""}`}
+                    onClick={header.column.getToggleSortingHandler()}
                   >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                    <div className="flex items-center">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                      {{
+                        asc: "↑",
+                        desc: "↓",
+                      }[header.column.getIsSorted() as string] || null}
+                    </div>
                   </TableHead>
                 ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    className={cell.column.id === "board" ? "font-medium" : ""}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+            {table.getRowModel().rows.length > 0 ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      className={
+                        cell.column.id === "board" ? "font-medium" : ""
+                      }
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center py-4"
+                >
+                  No results found
+                </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>
