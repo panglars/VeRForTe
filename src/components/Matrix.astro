@@ -1,0 +1,138 @@
+---
+import YAML from "yaml";
+import DataTable from "./DataTable";
+
+import { getLangFromUrl } from "@/i18n/utils";
+
+const lang = getLangFromUrl(Astro.url);
+
+// TypeScript interfaces
+interface SystemEntry {
+  [id: string]: string;
+}
+
+interface MetadataStructure {
+  linux?: SystemEntry[];
+  bsd?: SystemEntry[];
+  rtos?: SystemEntry[];
+  others?: SystemEntry[];
+  customized?: SystemEntry[];
+  [key: string]: SystemEntry[] | undefined;
+}
+
+export interface BoardMetaData {
+  product: string;
+  cpu: string;
+  cpu_core: string;
+  dir: string;
+}
+
+export interface SysMetaData {
+  sys: string;
+  sys_ver: string;
+  sys_var: string | null;
+  status: string;
+  last_update: string;
+  dir: string;
+  boardDir: string;
+}
+
+interface Props {
+  boardsData: BoardMetaData;
+  sysData: SysMetaData;
+  metadataPath: string;
+}
+
+const {
+  boardsData,
+  sysData,
+  metadataPath = "/support-matrix/assets/metadata.yml",
+} = Astro.props;
+
+// Read and parse metadata.yml file
+const metadataFiles = import.meta.glob("/support-matrix/assets/metadata.yml", {
+  query: "?raw",
+  import: "default",
+});
+
+const importMetadata = metadataFiles[metadataPath];
+const metadataText = await importMetadata();
+const metadata = YAML.parse(metadataText) as MetadataStructure;
+
+// Category names mapping
+const categoryNames: CategoryNames = {
+  linux: "Linux Systems",
+  bsd: "BSD Systems",
+  rtos: "Real-time Operating Systems",
+  others: "Other Systems",
+  customized: "Customized Systems",
+};
+
+// Process metadata into categories
+const categories: CategoryMap = {};
+Object.entries(metadata).forEach(([category, systems]) => {
+  if (!categories[category]) {
+    categories[category] = [];
+  }
+
+  if (systems) {
+    systems.forEach((system) => {
+      const entries = Object.entries(system);
+      if (entries.length > 0) {
+        const [id, name] = entries[0];
+        categories[category].push({ id, name });
+      }
+    });
+  }
+});
+
+// Merge linux and customized categories
+if (categories.customized) {
+  categories.linux = [
+    ...(categories.linux || []),
+    ...(categories.customized || []),
+  ];
+  delete categories.customized;
+}
+
+// Prepare data for each category
+const categoryData = Object.entries(categories).map(([category, systems]) => {
+  const statusMatrix = boardsData.map((board) => {
+    const boardSystems = sysData.filter((sys) => sys.boardDir === board.dir);
+
+    return systems.map((sysObj) => {
+      const matchingSystems = boardSystems.filter(
+        (sys) => sys.sys.toLowerCase() === sysObj.id.toLowerCase(),
+      );
+
+      if (matchingSystems.length > 0) {
+        return matchingSystems[0].status.toUpperCase();
+      }
+      return null;
+    });
+  });
+
+  return {
+    category,
+    categoryName: categoryNames[category] || category,
+    systems,
+    statusMatrix,
+  };
+});
+---
+
+<div class="w-full py-10 px-4">
+  {
+    categoryData.map(({ category, categoryName, systems, statusMatrix }) => (
+      <DataTable
+        client:load
+        lang={lang}
+        boards={boardsData}
+        systems={sysData}
+        systemList={systems}
+        statusMatrix={statusMatrix}
+        categoryName={categoryName}
+      />
+    ))
+  }
+</div>
