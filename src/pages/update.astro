@@ -1,1 +1,21 @@
-<h1>Todo</h1>
+---
+import Layout from "../layouts/Layout.astro";
+import { getAllBoardsData, getAllSysData } from "@/lib/data";
+import UpdateTableClient from "@/components/UpdateTableClient";
+
+const boards = await getAllBoardsData();
+const systems = await getAllSysData();
+
+const { lang = "en" } = Astro.props;
+---
+
+<Layout title="Development Boards">
+  <div class="container mx-auto py-6">
+    <UpdateTableClient
+      client:load
+      boards={boards}
+      systems={systems}
+      lang={lang}
+    />
+  </div>
+</Layout>
