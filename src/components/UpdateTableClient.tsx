@@ -30,6 +30,7 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import type { BoardMetaData, SysMetaData } from "@/lib/data";
+import { getRelativeLocaleUrl } from "astro:i18n";
 
 // Filter component using shadcn's combobox pattern
 interface ComboboxProps {
@@ -72,10 +73,7 @@ function Combobox({ options, value, onChange, placeholder }: ComboboxProps) {
               className="cursor-pointer"
             >
               <Check
-                className={cn(
-                  "mr-2 h-4 w-4",
-                  value === "" ? "opacity-100" : "opacity-0",
-                )}
+                className={`mr-2 h-4 w-4 ${value === "" ? "opacity-100" : "opacity-0"}`}
               />
               All
             </CommandItem>
@@ -90,10 +88,7 @@ function Combobox({ options, value, onChange, placeholder }: ComboboxProps) {
                 className="cursor-pointer"
               >
                 <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    value === option.value ? "opacity-100" : "opacity-0",
-                  )}
+                  className={`mr-2 h-4 w-4 ${value === "" ? "opacity-100" : "opacity-0"}`}
                 />
                 {option.label}
               </CommandItem>
