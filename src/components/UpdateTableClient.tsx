@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   createColumnHelper,
   flexRender,
@@ -6,6 +6,7 @@ import {
   useReactTable,
   getSortedRowModel,
   getFilteredRowModel,
+  type SortingState,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -28,6 +29,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import type { BoardMetaData, SysMetaData } from "@/lib/data";
 import { getRelativeLocaleUrl } from "astro:i18n";
@@ -40,7 +42,12 @@ interface ComboboxProps {
   placeholder: string;
 }
 
-function Combobox({ options, value, onChange, placeholder }: ComboboxProps) {
+function Combobox({
+  options = [],
+  value,
+  onChange,
+  placeholder,
+}: ComboboxProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -63,26 +70,13 @@ function Combobox({ options, value, onChange, placeholder }: ComboboxProps) {
           <CommandInput
             placeholder={`Search ${placeholder.toLowerCase()}...`}
           />
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup>
-            <CommandItem
-              onSelect={() => {
-                onChange("");
-                setOpen(false);
-              }}
-              className="cursor-pointer"
-            >
-              <Check
-                className={`mr-2 h-4 w-4 ${value === "" ? "opacity-100" : "opacity-0"}`}
-              />
-              All
-            </CommandItem>
-            {options.map((option) => (
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup>
               <CommandItem
-                key={option.value}
-                value={option.value}
-                onSelect={() => {
-                  onChange(option.value);
+                value="all"
+                onSelect={(currentValue) => {
+                  onChange("");
                   setOpen(false);
                 }}
                 className="cursor-pointer"
@@ -90,10 +84,26 @@ function Combobox({ options, value, onChange, placeholder }: ComboboxProps) {
                 <Check
                   className={`mr-2 h-4 w-4 ${value === "" ? "opacity-100" : "opacity-0"}`}
                 />
-                {option.label}
+                All
               </CommandItem>
-            ))}
-          </CommandGroup>
+              {options.map((option) => (
+                <CommandItem
+                  key={option.value}
+                  value={option.value}
+                  onSelect={(currentValue) => {
+                    onChange(currentValue);
+                    setOpen(false);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Check
+                    className={`mr-2 h-4 w-4 ${value === option.value ? "opacity-100" : "opacity-0"}`}
+                  />
+                  {option.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
@@ -158,7 +168,7 @@ export default function UpdateTableClient({
   systems,
 }: UpdateTableClientProps) {
   // State management
-  const [sorting, setSorting] = useState([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [boardFilter, setBoardFilter] = useState("");
   const [systemFilter, setSystemFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -176,7 +186,7 @@ export default function UpdateTableClient({
           return boardData ? boardData.product : info.getValue();
         },
       }),
-      columnHelper.accessor("sys", {
+      columnHelper.accessor("dir", {
         header: "System",
         cell: (info) => info.getValue(),
       }),
@@ -184,6 +194,11 @@ export default function UpdateTableClient({
         header: "Version",
         cell: (info) => info.getValue(),
       }),
+      columnHelper.accessor("sys_var", {
+        header: "Various",
+        cell: (info) => info.getValue(),
+      }),
+
       columnHelper.accessor("status", {
         header: "Status",
         cell: (info) => (
@@ -262,7 +277,7 @@ export default function UpdateTableClient({
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="flex flex-col md:flex-row gap-6 mb-6">
         <Combobox
           placeholder="Select Board"
           options={boardOptions}
