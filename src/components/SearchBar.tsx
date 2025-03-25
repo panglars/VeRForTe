@@ -5,50 +5,45 @@ import { Search as SearchIcon } from "lucide-react";
 export default function SearchBar({ boards }) {
   const [query, setQuery] = useState("");
 
-  const handleSearch = (e) => {
-    const searchQuery = e.target.value.toLowerCase().trim();
-    setQuery(searchQuery);
+const handleSearch = (e) => {
+  const searchQuery = e.target.value;
+  const cursorPos = e.target.selectionStart;
+  setQuery(searchQuery);
 
-    const cards = document.querySelectorAll(".board-card");
+  const cards = document.querySelectorAll(".board-card");
+  const noResultsMessage = document.getElementById("no-results");
 
-    if (!searchQuery) {
-      cards.forEach((card) => {
-        card.classList.remove("hidden");
-      });
+  const normalizedQuery = searchQuery.toLowerCase().trim()
 
-      const noResultsMessage = document.getElementById("no-results");
-      if (noResultsMessage) {
-        noResultsMessage.classList.add("hidden");
-      }
-      return;
+  if (!normalizedQuery) {
+    cards.forEach((card) => card.classList.remove("hidden"));
+    if (noResultsMessage) noResultsMessage.classList.add("hidden");
+    return;
+  }
+
+  let hasVisibleCards = false;
+
+  cards.forEach((card) => {
+    const product = card.getAttribute("data-product")?.toLowerCase() || "";
+    const cpu = card.getAttribute("data-cpu")?.toLowerCase() || "";
+    const cpuCore = card.getAttribute("data-cpu-core")?.toLowerCase() || "";
+
+    const isMatch = [product, cpu, cpuCore].some(attr => 
+      attr.includes(normalizedQuery)
+    );
+
+    if (isMatch) {
+      card.classList.remove("hidden");
+      hasVisibleCards = true;
+    } else {
+      card.classList.add("hidden");
     }
+  });
 
-    let hasVisibleCards = false;
-
-    cards.forEach((card) => {
-      const product = card.getAttribute("data-product")?.toLowerCase() || "";
-      const cpu = card.getAttribute("data-cpu")?.toLowerCase() || "";
-      const cpuCore = card.getAttribute("data-cpu-core")?.toLowerCase() || "";
-
-      if (
-        product.includes(searchQuery) ||
-        cpu.includes(searchQuery) ||
-        cpuCore.includes(searchQuery)
-      ) {
-        card.classList.remove("hidden");
-        hasVisibleCards = true;
-      } else {
-        card.classList.add("hidden");
-      }
-    });
-
-    const noResultsMessage = document.getElementById("no-results");
-    if (!hasVisibleCards && noResultsMessage) {
-      noResultsMessage.classList.remove("hidden");
-    } else if (noResultsMessage) {
-      noResultsMessage.classList.add("hidden");
-    }
-  };
+  if (noResultsMessage) {
+    noResultsMessage.classList.toggle("hidden", hasVisibleCards);
+  }
+};
 
   return (
     <div className="max-w-xl w-full mx-auto md:my-16 my-8">
