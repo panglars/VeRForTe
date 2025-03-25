@@ -1,7 +1,7 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import { getAllBoardsData } from "../lib/data";
-import BoardList from "../components/BoardList.astro";
+import Layout from "@/layouts/Layout.astro";
+import { getAllBoardsData } from "@/lib/data";
+import BoardList from "@/components/BoardList.astro";
 import { siteConfig } from "@/config/site";
 // Get all board data
 const boardsData = await getAllBoardsData();

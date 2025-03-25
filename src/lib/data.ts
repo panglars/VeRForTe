@@ -98,7 +98,10 @@ export async function getAllBoards(): Promise<string[]> {
       })
       .filter(
         (name): name is string =>
-          name !== null && name !== ".github" && name !== "assets",
+          name !== null &&
+          name !== ".github" &&
+          name !== "assets" &&
+          name !== "report-template",
       );
 
     return boards;
