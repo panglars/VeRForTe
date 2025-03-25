@@ -17,8 +17,6 @@ export interface Props {
 const { boardDir, osList = [] } = Astro.props;
 
 // Variables to store content and state
-let content = "";
-let osContent = "";
 let osDetails = [];
 let isLoading = true;
 let error = null;
@@ -90,7 +88,7 @@ try {
                 >
                   <Card className="hover:shadow-lg hover:bg-muted transition-shadow h-full">
                     <CardHeader className="items-center">
-                      <CardTitle>
+                      <CardTitle className="text-lg">
                         {os.sysDir} {os.sysVar ? "-" + os.sysVar : ""}
                       </CardTitle>
                       {(() => {
