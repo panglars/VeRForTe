@@ -6,6 +6,7 @@ import {
   useReactTable,
   getSortedRowModel,
 } from "@tanstack/react-table";
+import type { SortingState } from "@tanstack/react-table";
 import {
   Table,
   TableBody,
@@ -18,11 +19,16 @@ import {
 import { getRelativeLocaleUrl } from "astro:i18n";
 import type { BoardMetaData, SysMetaData } from "@/lib/data";
 
+interface SystemListItem {
+  id: string;
+  name: string;
+}
+
 interface DataTableProps {
   lang: string;
-  boards: BoardMetaData;
-  systems: SysMetaData;
-  systemList;
+  boards: BoardMetaData[];
+  systems: SysMetaData[];
+  systemList: SystemListItem[];
   statusMatrix: (string | null)[][];
   categoryName: string;
 }
@@ -32,11 +38,13 @@ const StatusCell = ({
   lang,
   boardDir,
   systemDir,
+  fileName,
 }: {
   status: string | null;
   lang: string;
   boardDir: string;
   systemDir: string;
+  fileName: string;
 }) => {
   if (!status) return <span>-</span>;
 
@@ -59,9 +67,13 @@ const StatusCell = ({
 
   return (
     <a
-      href={getRelativeLocaleUrl(lang, `board/${boardDir}/${systemDir}`, {
-        normalizeLocale: false,
-      })}
+      href={getRelativeLocaleUrl(
+        lang,
+        `board/${boardDir}/${systemDir}-${fileName}`,
+        {
+          normalizeLocale: false,
+        },
+      )}
       className="no-underline"
     >
       {statusElement}
@@ -77,9 +89,12 @@ export default function DataTable({
   statusMatrix,
   categoryName,
 }: DataTableProps) {
-  const [sorting, setSorting] = useState([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
 
-  const columnHelper = createColumnHelper<any>();
+  const columnHelper = createColumnHelper<{
+    board: BoardMetaData;
+    statuses: (string | null)[];
+  }>();
 
   const columns = useMemo(() => {
     // Create board column
@@ -99,16 +114,20 @@ export default function DataTable({
         id: system.id,
         header: system.name,
         cell: (info) => {
-          const systemInfo = systems.find((s) => s.sys === system.id);
+          const systemInfo: SysMetaData | undefined = systems.find(
+            (s) => s.sys === system.id,
+          );
           return (
             <StatusCell
               status={info.getValue()}
               lang={lang}
               boardDir={info.row.original.board.dir}
-              systemDir={systemInfo?.dir}
+              systemDir={systemInfo?.sysDir}
+              fileName={systemInfo?.fileName}
             />
           );
         },
+
         sortingFn: (rowA, rowB) => {
           const statusA = rowA.original.statuses[index] || "";
           const statusB = rowB.original.statuses[index] || "";

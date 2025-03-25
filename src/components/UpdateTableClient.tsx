@@ -116,11 +116,13 @@ const StatusCell = ({
   lang,
   boardDir,
   systemDir,
+  fileName,
 }: {
   status: string | null;
   lang: string;
   boardDir: string;
   systemDir: string;
+  fileName: string;
 }) => {
   if (!status) return <span>-</span>;
 
@@ -144,9 +146,13 @@ const StatusCell = ({
 
   return (
     <a
-      href={getRelativeLocaleUrl(lang, `board/${boardDir}/${systemDir}`, {
-        normalizeLocale: false,
-      })}
+      href={getRelativeLocaleUrl(
+        lang,
+        `board/${boardDir}/${systemDir}-${fileName}`,
+        {
+          normalizeLocale: false,
+        },
+      )}
       className="no-underline"
     >
       {statusElement}
@@ -207,6 +213,7 @@ export default function UpdateTableClient({
             lang={lang}
             boardDir={info.row.original.boardDir}
             systemDir={info.row.original.sysDir}
+            fileName={info.row.original.fileName}
           />
         ),
       }),
