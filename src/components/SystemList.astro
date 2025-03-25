@@ -1,13 +1,7 @@
 ---
 import { getSysData } from "@/lib/data";
 
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "./ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { getLangFromUrl, useTranslations } from "@/i18n/utils";
@@ -17,13 +11,10 @@ const t = useTranslations(lang);
 
 export interface Props {
   boardDir: string;
-  className?: string;
-  showToc?: boolean;
-  osFilter?: string;
-  osList?: Array<{ linkName: string; systemDir: string; fileName?: string }>;
+  osList?: Array<{ sysDir: string; fileName: string }>;
 }
 
-const { boardDir, showToc = true, osFilter = null, osList = [] } = Astro.props;
+const { boardDir, osList = [] } = Astro.props;
 
 // Variables to store content and state
 let content = "";
@@ -33,27 +24,17 @@ let isLoading = true;
 let error = null;
 
 try {
-  // If osFilter is provided, get specific OS content
-  if (osFilter) {
-    const sysData = await getSysData(boardDir, osFilter);
+  for (const os of osList) {
+    const sysData = await getSysData(boardDir, os.sysDir, os.fileName);
     if (sysData) {
       osDetails.push({
-        systemDir: sysData.dir,
-        linkName: sysData.sys,
+        sysDir: sysData.sysDir,
+        sysStatus: sysData.status,
+        sysUpdate: sysData.last_update,
+        sysVer: sysData.sys_ver,
+        sysVar: sysData.sys_var,
+        fileName: sysData.fileName,
       });
-    }
-  } else {
-    for (const os of osList) {
-      const sysData = await getSysData(boardDir, os.systemDir);
-      if (sysData) {
-        osDetails.push({
-          sysDir: sysData.dir,
-          sysStatus: sysData.status,
-          sysUpdate: sysData.last_update,
-          sysVer: sysData.sys_ver,
-          linkName: os.linkName,
-        });
-      }
     }
   }
 } catch (e: unknown) {
@@ -62,9 +43,6 @@ try {
 } finally {
   isLoading = false;
 }
-
-// Determine which content to display
-const displayContent = osFilter ? osContent : content;
 ---
 
 {
@@ -93,9 +71,9 @@ const displayContent = osFilter ? osContent : content;
 
 {
   !isLoading && (
-    <div class={showToc ? "lg:col-span-3" : ""}>
+    <div class="lg:col-span-3">
       {/* Display OS list with enhanced details if not filtered */}
-      {!osFilter && osDetails.length > 0 && (
+      {osDetails.length > 0 && (
         <div class="mb-8">
           <div class="rounded-lg mb-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -103,7 +81,7 @@ const displayContent = osFilter ? osContent : content;
                 <a
                   href={getRelativeLocaleUrl(
                     lang,
-                    `board/${boardDir}/${os.linkName}`,
+                    `board/${boardDir}/${os.sysDir}-${os.fileName}`,
                     {
                       normalizeLocale: false,
                     },
@@ -112,7 +90,9 @@ const displayContent = osFilter ? osContent : content;
                 >
                   <Card className="hover:shadow-lg hover:bg-muted transition-shadow h-full">
                     <CardHeader className="items-center">
-                      <CardTitle>{os.linkName}</CardTitle>
+                      <CardTitle>
+                        {os.sysDir} {os.sysVar ? "-" + os.sysVar : ""}
+                      </CardTitle>
                       {(() => {
                         const status = os.sysStatus.toUpperCase();
                         const statusClass =
@@ -124,7 +104,7 @@ const displayContent = osFilter ? osContent : content;
                                 ? "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
                                 : status === "CFT"
                                   ? "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
-                                  : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100";
+                                  : "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100";
 
                         return (
                           <span

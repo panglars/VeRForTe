@@ -8,9 +8,6 @@ import {
   getSysData,
 } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { getLangFromUrl } from "@/i18n/utils";
-
-const lang = getLangFromUrl(Astro.url);
 
 // Generate static paths for all boards and their operating systems
 export async function getStaticPaths() {
@@ -24,12 +21,14 @@ export async function getStaticPaths() {
     for (const sysData of sysDataList) {
       paths.push({
         params: {
-          board: boardDir,
-          system: sysData.dir,
+          board: sysData.boardDir,
+          system: sysData.sysDir,
+          file: sysData.fileName,
         },
         props: {
-          boardDir,
-          sysDir: sysData.dir,
+          boardDir: sysData.boardDir,
+          sysDir: sysData.sysDir,
+          fileName: sysData.fileName,
         },
       });
     }
@@ -38,7 +37,7 @@ export async function getStaticPaths() {
   return paths;
 }
 
-const { boardDir, sysDir } = Astro.props;
+const { boardDir, sysDir, fileName } = Astro.props;
 
 let board;
 let sysData;
@@ -50,17 +49,18 @@ try {
   if (!board) {
     error = `Board information for "${boardDir}" not found`;
   } else {
-    sysData = await getSysData(boardDir, sysDir);
+    sysData = await getSysData(boardDir, sysDir, "README");
     if (!sysData) {
       error = `System information for "${sysDir}" not found`;
     } else {
       try {
-        const readmePath = `/support-matrix/${boardDir}/${sysDir}/README_zh.md`;
+        const readmePath = `/support-matrix/${boardDir}/${sysDir}/${fileName}.md`;
         const mdFiles = import.meta.glob("/support-matrix/**/*.md");
 
         if (mdFiles[readmePath]) {
-          const { Content: ImportedContent } = await mdFiles[readmePath]();
-          Content = ImportedContent;
+          const module = await mdFiles[readmePath]();
+          // @ts-ignore - Astro MDX imports have Content component
+          Content = module.Content;
         } else {
           error = `System README file not found: ${readmePath}`;
         }
@@ -76,22 +76,24 @@ try {
 }
 
 const title =
-  board && sysData ? `${sysData.sys} 在 ${board.product}` : "未找到该系统";
+  board && sysData
+    ? `${sysData.sysDir} on ${board.product}`
+    : "System Not Found";
 ---
 
 <Layout title={title}>
   <div class="max-w-5xl mx-auto">
     <a
-      href={`/${lang}/board/${boardDir}`}
+      href={`/board/${boardDir}`}
       class="text-primary hover:underline mb-6 inline-block"
     >
-      ← 返回到 {board ? board.product : boardDir}
+      ← Back to {board ? board.product : boardDir}
     </a>
 
     {
       error ? (
         <div class="p-6 border border-red-300 bg-red-50 text-red-700 rounded-md">
-          <h1 class="text-2xl font-bold mb-4">错误</h1>
+          <h1 class="text-2xl font-bold mb-4">Error</h1>
           <p>{error}</p>
         </div>
       ) : (
@@ -99,7 +101,7 @@ const title =
           <Card className="mb-8">
             <CardHeader>
               <CardTitle className="text-2xl">
-                {sysData!.dir} @ {board!.product} 测试报告
+                {sysData!.sysDir} @ {board!.product} Test Report
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -107,29 +109,27 @@ const title =
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div>
                     <h3 class="text-sm font-medium text-muted-foreground">
-                      支持状态
+                      System Version
+                    </h3>
+                    <p class="text-lg">{sysData!.sys_ver}</p>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-medium text-muted-foreground">
+                      Status
                     </h3>
                     <p class="text-lg">{sysData!.status}</p>
                   </div>
-                  {sysData!.sys_ver && (
-                    <div>
-                      <h3 class="text-sm font-medium text-muted-foreground">
-                        系统版本
-                      </h3>
-                      <p class="text-lg">{sysData!.sys_ver}</p>
-                    </div>
-                  )}
                   {sysData!.sys_var && (
                     <div>
                       <h3 class="text-sm font-medium text-muted-foreground">
-                        系统变种
+                        System Variant
                       </h3>
                       <p class="text-lg">{sysData!.sys_var}</p>
                     </div>
                   )}
                   <div>
                     <h3 class="text-sm font-medium text-muted-foreground">
-                      最后更新
+                      Last Update
                     </h3>
                     <p class="text-lg">{sysData!.last_update}</p>
                   </div>
@@ -139,7 +139,11 @@ const title =
             prose-pre:whitespace-pre-wrap prose-pre:word-break-normal prose-pre:break-words
             prose-a:break-words prose-a:overflow-wrap-anywhere prose-a:word-break-all"
                 >
-                  {Content ? <Content /> : <p>没有可用于此系统的详细信息。</p>}
+                  {Content ? (
+                    <Content />
+                  ) : (
+                    <p>No detailed information available for this system.</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -147,14 +151,14 @@ const title =
 
           <div class="mt-8">
             <p class="text-sm text-muted-foreground">
-              来源:
+              Source:
               <a
-                href={`https://github.com/ruyisdk/support-matrix/blob/main/${boardDir}/${sysDir}/README_zh.md`}
+                href={`https://github.com/ruyisdk/support-matrix/blob/main/${boardDir}/${sysDir}/${fileName}.md`}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-primary hover:underline"
               >
-                支持矩阵
+                Support Matrix
               </a>
             </p>
           </div>

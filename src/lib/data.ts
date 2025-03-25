@@ -13,8 +13,9 @@ export interface SysMetaData {
   sys_var: string | null;
   status: string;
   last_update: string;
-  dir: string;
+  sysDir: string;
   boardDir: string;
+  fileName: string;
 }
 
 // Import all README.md files from support-matrix at build time
@@ -121,7 +122,7 @@ export async function getAllBoardsData(): Promise<BoardMetaData[]> {
 }
 
 // Import all system README.md files from support-matrix at build time
-const sysReadmeFiles = import.meta.glob("/support-matrix/*/*/README.md", {
+const sysReadmeFiles = import.meta.glob("/support-matrix/*/*/*.md", {
   query: "?raw",
   import: "default",
 });
@@ -135,17 +136,18 @@ const sysReadmeFiles = import.meta.glob("/support-matrix/*/*/README.md", {
 export async function getSysData(
   boardDir: string,
   sysDir: string,
+  fileName: string,
 ): Promise<SysMetaData | null> {
   try {
     // Construct the path to the system README.md file
-    const readmePath = `/support-matrix/${boardDir}/${sysDir}/README.md`;
+    const readmePath = `/support-matrix/${boardDir}/${sysDir}/${fileName}.md`;
 
     // Get the import function for this specific README file
     const importReadme = sysReadmeFiles[readmePath];
 
     if (!importReadme) {
       console.error(
-        `README file not found for system ${sysDir} on board ${boardDir}`,
+        `${fileName} file not found for system ${sysDir} on board ${boardDir}`,
       );
       return null;
     }
@@ -170,8 +172,9 @@ export async function getSysData(
         sys_var: frontmatter.sys_var,
         status: frontmatter.status || "Not specified",
         last_update: frontmatter.last_update || "Not specified",
-        dir: sysDir,
+        sysDir: sysDir,
         boardDir: boardDir,
+        fileName: fileName,
       };
     } catch (readError) {
       console.error(
@@ -198,10 +201,10 @@ function extractFrontmatter(content: string): Record<string, any> | null {
   // Extract the frontmatter section between --- markers
   const frontmatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
   if (!frontmatterMatch) return null;
-  
+
   const frontmatter: Record<string, any> = {};
   const frontmatterText = frontmatterMatch[1];
-  
+
   // Process each line to extract key-value pairs
   const lines = frontmatterText.split("\n");
   for (const line of lines) {
@@ -209,12 +212,12 @@ function extractFrontmatter(content: string): Record<string, any> | null {
     if (keyValueMatch) {
       const key = keyValueMatch[1].trim();
       const value = keyValueMatch[2].trim();
-      
+
       // Handle special values
-      frontmatter[key] = (value === "null" || value === "") ? null : value;
+      frontmatter[key] = value === "null" || value === "" ? null : value;
     }
   }
-  
+
   return frontmatter;
 }
 
@@ -223,21 +226,29 @@ function extractFrontmatter(content: string): Record<string, any> | null {
  * @param boardDir The name of the board
  * @returns Promise with an array of system directory names
  */
-export async function getBoardSysDirs(boardDir: string): Promise<string[]> {
+export async function getBoardSysDirs(
+  boardDir: string,
+): Promise<{ sysDir: string; fileName: string }[]> {
   try {
     const pattern = new RegExp(
-      `^/support-matrix/${boardDir}/([^/]+)/README\\.md$`,
+      `^/support-matrix/${boardDir}/([^/]+)/([^/]+)\\.md$`,
     );
 
-    // Extract system directory names from the paths of all README files
-    const sysDirs = Object.keys(sysReadmeFiles)
+    // Extract system directory and file names from the paths of README files
+    const sysDirInfo = Object.keys(sysReadmeFiles)
       .map((path) => {
         const match = path.match(pattern);
-        return match ? match[1] : null;
+        // Skip files ending with _zh.md
+        if (match && !match[2].endsWith("_zh")) {
+          return { sysDir: match[1], fileName: match[2] };
+        }
+        return null;
       })
-      .filter((name): name is string => name !== null);
+      .filter(
+        (info): info is { sysDir: string; fileName: string } => info !== null,
+      );
 
-    return sysDirs;
+    return sysDirInfo;
   } catch (error) {
     console.error(
       `Error fetching system directories for board ${boardDir}:`,
@@ -255,8 +266,10 @@ export async function getBoardSysDirs(boardDir: string): Promise<string[]> {
 export async function getBoardAllSysData(
   boardDir: string,
 ): Promise<SysMetaData[]> {
-  const sysDirs = await getBoardSysDirs(boardDir);
-  const sysDataPromises = sysDirs.map((sysDir) => getSysData(boardDir, sysDir));
+  const sysDirInfos = await getBoardSysDirs(boardDir);
+  const sysDataPromises = sysDirInfos.map((info) =>
+    getSysData(boardDir, info.sysDir, info.fileName),
+  );
   const sysData = await Promise.all(sysDataPromises);
 
   // Filter out null values (systems that couldn't be fetched)
@@ -270,8 +283,10 @@ export async function getBoardAllSysData(
 export async function getAllSysData(): Promise<SysMetaData[]> {
   const boards = await getAllBoards();
   const allSysDataPromises = boards.flatMap(async (boardDir) => {
-    const sysDirs = await getBoardSysDirs(boardDir);
-    return sysDirs.map((sysDir) => getSysData(boardDir, sysDir));
+    const sysDirInfos = await getBoardSysDirs(boardDir);
+    return sysDirInfos.map((info) =>
+      getSysData(boardDir, info.sysDir, info.fileName),
+    );
   });
 
   const allSysDataNestedPromises = await Promise.all(allSysDataPromises);

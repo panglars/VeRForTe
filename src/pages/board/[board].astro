@@ -1,17 +1,7 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import {
-  getAllBoardsData,
-  getBoardData,
-  getBoardSysDirs,
-  getSysData,
-} from "../../lib/data";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "../../components/ui/card";
+import Layout from "@/layouts/Layout.astro";
+import { getAllBoardsData, getBoardData, getBoardSysDirs } from "@/lib/data";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import SystemList from "@/components/SystemList.astro";
 
 // Generate static paths for all boards
@@ -36,10 +26,10 @@ try {
   if (!board) {
     error = `Board information for "${boardDir}" not found`;
   } else {
-    const sysDirs = await getBoardSysDirs(boardDir);
-    osList = sysDirs.map((sysDir) => ({
-      systemDir: sysDir,
-      linkName: sysDir,
+    const dirs = await getBoardSysDirs(boardDir);
+    osList = dirs.map((dir) => ({
+      sysDir: dir.sysDir,
+      fileName: dir.fileName,
     }));
   }
 } catch (e) {
@@ -86,11 +76,11 @@ try {
             </CardContent>
           </Card>
 
-          <SystemList boardDir={boardDir} showToc={true} osList={osList} />
+          <SystemList boardDir={boardDir} osList={osList} />
 
           <div class="mt-8">
             <p class="text-sm text-muted-foreground">
-              Source:
+              来源:
               <a
                 href={`https://github.com/ruyisdk/support-matrix/blob/main/${boardDir}/README.md`}
                 target="_blank"

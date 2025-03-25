@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   createColumnHelper,
   flexRender,
@@ -16,23 +16,7 @@ import {
 } from "@/components/ui/table";
 
 import { getRelativeLocaleUrl } from "astro:i18n";
-
-export interface BoardMetaData {
-  product: string;
-  cpu: string;
-  cpu_core: string;
-  dir: string;
-}
-
-export interface SysMetaData {
-  sys: string;
-  sys_ver: string;
-  sys_var: string | null;
-  status: string;
-  last_update: string;
-  dir: string;
-  boardDir: string;
-}
+import type { BoardMetaData, SysMetaData } from "@/lib/data";
 
 interface DataTableProps {
   lang: string;

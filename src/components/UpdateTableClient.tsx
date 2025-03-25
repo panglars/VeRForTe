@@ -186,7 +186,7 @@ export default function UpdateTableClient({
           return boardData ? boardData.product : info.getValue();
         },
       }),
-      columnHelper.accessor("dir", {
+      columnHelper.accessor("sysDir", {
         header: "System",
         cell: (info) => info.getValue(),
       }),
@@ -206,7 +206,7 @@ export default function UpdateTableClient({
             status={info.getValue()}
             lang={lang}
             boardDir={info.row.original.boardDir}
-            systemDir={info.row.original.dir}
+            systemDir={info.row.original.sysDir}
           />
         ),
       }),

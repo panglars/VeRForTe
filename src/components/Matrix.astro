@@ -3,6 +3,7 @@ import YAML from "yaml";
 import DataTable from "./DataTable";
 
 import { getLangFromUrl } from "@/i18n/utils";
+import type { BoardMetaData, SysMetaData } from "@/lib/data";
 
 const lang = getLangFromUrl(Astro.url);
 
@@ -18,23 +19,6 @@ interface MetadataStructure {
   others?: SystemEntry[];
   customized?: SystemEntry[];
   [key: string]: SystemEntry[] | undefined;
-}
-
-export interface BoardMetaData {
-  product: string;
-  cpu: string;
-  cpu_core: string;
-  dir: string;
-}
-
-export interface SysMetaData {
-  sys: string;
-  sys_ver: string;
-  sys_var: string | null;
-  status: string;
-  last_update: string;
-  dir: string;
-  boardDir: string;
 }
 
 interface Props {
@@ -96,40 +80,42 @@ if (categories.customized) {
 }
 
 // Prepare data for each category
-const categoryData = Object.entries(categories).map(([category, systems]) => {
-  const statusMatrix = boardsData.map((board) => {
-    const boardSystems = sysData.filter((sys) => sys.boardDir === board.dir);
+const categoryData = Object.entries(categories).map(
+  ([category, systemList]) => {
+    const statusMatrix = boardsData.map((board) => {
+      const boardSystems = sysData.filter((sys) => sys.boardDir === board.dir);
 
-    return systems.map((sysObj) => {
-      const matchingSystems = boardSystems.filter(
-        (sys) => sys.sys.toLowerCase() === sysObj.id.toLowerCase(),
-      );
+      return systemList.map((sysObj) => {
+        const matchingSystems = boardSystems.filter(
+          (sys) => sys.sys.toLowerCase() === sysObj.id.toLowerCase(),
+        );
 
-      if (matchingSystems.length > 0) {
-        return matchingSystems[0].status.toUpperCase();
-      }
-      return null;
+        if (matchingSystems.length > 0) {
+          return matchingSystems[0].status.toUpperCase();
+        }
+        return null;
+      });
     });
-  });
 
-  return {
-    category,
-    categoryName: categoryNames[category] || category,
-    systems,
-    statusMatrix,
-  };
-});
+    return {
+      category,
+      categoryName: categoryNames[category] || category,
+      systemList,
+      statusMatrix,
+    };
+  },
+);
 ---
 
 <div class="w-full py-10 px-4">
   {
-    categoryData.map(({ category, categoryName, systems, statusMatrix }) => (
+    categoryData.map(({ category, categoryName, systemList, statusMatrix }) => (
       <DataTable
         client:load
         lang={lang}
         boards={boardsData}
         systems={sysData}
-        systemList={systems}
+        systemList={systemList}
         statusMatrix={statusMatrix}
         categoryName={categoryName}
       />
