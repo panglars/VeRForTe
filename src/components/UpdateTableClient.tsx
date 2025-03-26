@@ -203,7 +203,7 @@ export default function UpdateTableClient({
         cell: (info) => info.getValue(),
       }),
       columnHelper.accessor("sys_var", {
-        header: "Various",
+        header: "Variant",
         cell: (info) => info.getValue(),
       }),
 
