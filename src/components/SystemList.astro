@@ -86,11 +86,9 @@ try {
                   )}
                   class=""
                 >
-                  <Card className="hover:shadow-lg hover:bg-muted transition-shadow h-full">
+                  <Card className="h-full transition-transform duration-200 hover:bg-muted hover:shadow-lg hover:translate-y-[-0.25rem]">
                     <CardHeader className="items-center">
-                      <CardTitle className="text-lg">
-                        {os.sysDir} {os.sysVar ? "-" + os.sysVar : ""}
-                      </CardTitle>
+                      <CardTitle className="text-lg">{os.sysDir} </CardTitle>
                       {(() => {
                         const status = os.sysStatus;
                         const statusClass =
@@ -106,7 +104,7 @@ try {
 
                         return (
                           <span
-                            class={`inline-block px-2 py-1 rounded-md font-medium ${statusClass}`}
+                            class={`inline-block px-2 rounded-md font-medium ${statusClass}`}
                           >
                             {status}
                           </span>
@@ -114,13 +112,18 @@ try {
                       })()}
                     </CardHeader>
                     <CardContent>
-                      <div class="space-y-2 text-sm text-muted-foreground">
-                        <div class="flex items-center">
-                          <span class="w-24">{t("sys.version")}</span>
+                      <div class="space-y-2 text-muted-foreground">
+                        <div class="flex items-center justify-between">
+                          <span class="text-sm">{t("sys.variant")}</span>
+                          <span>{os.sysVar}</span>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                          <span class="text-sm">{t("sys.version")}</span>
                           <span>{os.sysVer}</span>
                         </div>
-                        <div class="flex items-center">
-                          <span class="w-24">{t("sys.update")}</span>
+                        <div class="flex items-center justify-between">
+                          <span class="text-sm">{t("sys.update")}</span>
                           <span>{os.sysUpdate}</span>
                         </div>
                       </div>

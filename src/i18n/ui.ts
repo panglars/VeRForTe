@@ -12,6 +12,7 @@ export const ui = {
     cpu: "CPU",
     core: "Core",
     "sys.status": "Status",
+    "sys.variant": "Variant",
     "sys.version": "Version",
     "sys.update": "Last Update",
   },
@@ -21,7 +22,8 @@ export const ui = {
     cpu: "处理器",
     core: "核心",
     "sys.status": "支持状态",
-    "sys.version": "版本",
+    "sys.variant": "系统变种",
+    "sys.version": "系统版本",
     "sys.update": "最后更新",
   },
 } as const;

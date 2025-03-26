@@ -40,20 +40,26 @@ const { boards } = Astro.props;
             })}
             class=""
           >
-            <Card className="hover:shadow-lg hover:bg-muted transition-shadow h-full">
+            <Card className="h-full transition-transform duration-200 hover:bg-muted hover:shadow-lg hover:translate-y-[-0.25rem]">
               <CardHeader>
-                <CardTitle className="text-lg">{board.product}</CardTitle>
+                <CardTitle className="text-lg font-semibold">
+                  {board.product}
+                </CardTitle>
                 <CardDescription />
               </CardHeader>
               <CardContent>
-                <div class="space-y-2 text-sm text-muted-foreground">
+                <div class="space-y-2 text-muted-foreground">
                   <div class="grid grid-cols-4">
-                    <span>{t("cpu")}</span>
-                    <span class="col-span-3">{board.cpu}</span>
+                    <span class="text-sm">{t("cpu")}</span>
+                    <span class="text-right font-medium col-span-3 text-secondary-foreground">
+                      {board.cpu}
+                    </span>
                   </div>
                   <div class="grid grid-cols-4">
-                    <span>{t("core")}</span>
-                    <span class="col-span-3">{board.cpu_core}</span>
+                    <span class="text-sm">{t("core")}</span>
+                    <span class="text-right font-medium col-span-3 text-secondary-foreground">
+                      {board.cpu_core}
+                    </span>
                   </div>
                 </div>
               </CardContent>
