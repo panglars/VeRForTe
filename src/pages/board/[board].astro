@@ -18,7 +18,7 @@ export async function getStaticPaths() {
 const { boardDir } = Astro.props;
 let board;
 let error = null;
-let osList = [];
+let osList: { sysDir: string; fileName: string; }[] | undefined = [];
 
 try {
   board = await getBoardData(boardDir);
