@@ -15,7 +15,7 @@ export const ui = {
     "sys.variant": "Variant",
     "sys.version": "Version",
     "sys.update": "Last Update",
-    "og.report": "Test Report",
+    "og.title": "Test Report",
   },
   zh_CN: {
     "nav.table": "支持矩阵",
@@ -26,6 +26,6 @@ export const ui = {
     "sys.variant": "系统变种",
     "sys.version": "系统版本",
     "sys.update": "最后更新",
-    "og.report": "测试报告",
+    "og.title": "测试报告",
   },
 } as const;
