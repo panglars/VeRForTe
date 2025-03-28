@@ -36,6 +36,7 @@
     "yaml": "^2.7.0"
   },
   "devDependencies": {
+    "@astrojs/ts-plugin": "^1.10.4",
     "@tailwindcss/typography": "^0.5.16",
     "prettier": "3.5.3",
     "prettier-plugin-astro": "0.14.1",
