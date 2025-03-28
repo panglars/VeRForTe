@@ -18,7 +18,7 @@ export async function getStaticPaths() {
 const { boardDir } = Astro.props;
 let board;
 let error = null;
-let osList: { sysDir: string; fileName: string; }[] | undefined = [];
+let osList: { sysDir: string; fileName: string }[] | undefined = [];
 
 try {
   board = await getBoardData(boardDir);
@@ -80,7 +80,7 @@ try {
 
           <div class="mt-8">
             <p class="text-sm text-muted-foreground">
-              来源:
+              Source:
               <a
                 href={`https://github.com/ruyisdk/support-matrix/blob/main/${boardDir}/README.md`}
                 target="_blank"
