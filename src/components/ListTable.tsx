@@ -139,9 +139,7 @@ const StatusCell = ({
             : "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100";
 
   const statusElement = (
-    <span
-      className={`inline-block px-2 py-1 rounded-md font-medium ${statusClass}`}
-    >
+    <span className={`inline-block px-2 rounded-md font-medium ${statusClass}`}>
       {status}
     </span>
   );
@@ -163,18 +161,14 @@ const StatusCell = ({
 };
 
 // Main component interface
-interface UpdateTableClientProps {
+interface ListTableProps {
   lang: string;
   boards: BoardMetaData[];
   systems: SysMetaData[];
 }
 
 // Main component
-export default function UpdateTableClient({
-  lang,
-  boards,
-  systems,
-}: UpdateTableClientProps) {
+export default function ListTable({ lang, boards, systems }: ListTableProps) {
   // State management
   const [sorting, setSorting] = useState<SortingState>([]);
   const [boardFilter, setBoardFilter] = useState("");

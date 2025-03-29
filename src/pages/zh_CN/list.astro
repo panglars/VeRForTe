@@ -1,7 +1,7 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import Layout from "@/layouts/Layout.astro";
 import { getAllBoardsData, getAllSysData } from "@/lib/data";
-import UpdateTableClient from "@/components/UpdateTableClient";
+import ListTable from "@/components/ListTable";
 import { getLangFromUrl } from "@/i18n/utils";
 
 const boards = await getAllBoardsData();
@@ -12,11 +12,6 @@ const lang = getLangFromUrl(Astro.url);
 
 <Layout title="Development Boards">
   <div class="container mx-auto py-6">
-    <UpdateTableClient
-      client:load
-      boards={boards}
-      systems={systems}
-      lang={lang}
-    />
+    <ListTable client:load boards={boards} systems={systems} lang={lang} />
   </div>
 </Layout>

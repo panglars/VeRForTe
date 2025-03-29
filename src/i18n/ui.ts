@@ -8,7 +8,7 @@ export const defaultLang = "en";
 export const ui = {
   en: {
     "nav.table": "Support Matrix",
-    "nav.update": "Last Update",
+    "nav.list": "Support List",
     cpu: "CPU",
     core: "Core",
     "sys.status": "Status",
@@ -19,7 +19,7 @@ export const ui = {
   },
   zh_CN: {
     "nav.table": "支持矩阵",
-    "nav.update": "最近更新",
+    "nav.list": "支持列表",
     cpu: "处理器",
     core: "核心",
     "sys.status": "支持状态",
