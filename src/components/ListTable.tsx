@@ -170,7 +170,9 @@ interface ListTableProps {
 // Main component
 export default function ListTable({ lang, boards, systems }: ListTableProps) {
   // State management
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "last_update", desc: true }
+  ]);
   const [boardFilter, setBoardFilter] = useState("");
   const [systemFilter, setSystemFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");

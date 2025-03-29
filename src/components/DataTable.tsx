@@ -91,7 +91,12 @@ export default function DataTable({
   statusMatrix,
   categoryName,
 }: DataTableProps) {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    {
+      id: "board",
+      desc: false,
+    },
+  ]);
 
   const columnHelper = createColumnHelper<{
     board: BoardMetaData;
