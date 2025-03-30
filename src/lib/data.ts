@@ -1,3 +1,5 @@
+import YAML from "yaml";
+
 // Interface for board meta data
 export interface BoardMetaData {
   product: string;
@@ -9,13 +11,13 @@ export interface BoardMetaData {
 // Interface for system data
 export interface SysMetaData {
   sys: string;
-  sys_ver: string;
+  sys_ver: string | null;
   sys_var: string | null;
   status: string;
-  last_update: string;
-  sysDir: string;
+  last_update: string | null;
+  sysDir: string | null;
   boardDir: string;
-  fileName: string;
+  fileName: string | null;
 }
 
 // Import all README.md files from support-matrix at build time
@@ -46,7 +48,7 @@ export async function getBoardData(
 
     try {
       // Load the README content
-      const content = await importReadme();
+      const content = (await importReadme()) as string;
 
       // Extract metadata from the content
       const product = extractMetadata(content, "product");
@@ -157,7 +159,7 @@ export async function getSysData(
 
     try {
       // Load the README content
-      const content = await importReadme();
+      const content = (await importReadme()) as string;
 
       // Extract frontmatter from the content
       const frontmatter = extractFrontmatter(content);
@@ -297,4 +299,102 @@ export async function getAllSysData(): Promise<SysMetaData[]> {
 
   // Filter out null values (systems that couldn't be fetched)
   return allSysData.filter((data): data is SysMetaData => data !== null);
+}
+
+// Import all other.yml files from support-matrix at build time
+const otherYml = import.meta.glob("/support-matrix/*/others.yml", {
+  query: "?raw",
+  import: "default",
+});
+
+/**
+ * Gets other system data from other.yml file for a specific board
+ * @param boardDir The name of the board
+ * @returns Promise with an array of system data
+ */
+export async function getBoardOtherSysData(
+  boardDir: string,
+): Promise<SysMetaData[]> {
+  try {
+    // Construct the path to the other.yml file
+    const ymlPath = `/support-matrix/${boardDir}/others.yml`;
+
+    // Get the import function for this specific yml file
+    const importYml = otherYml[ymlPath];
+
+    if (!importYml) {
+      return [];
+    }
+
+    try {
+      // Load the yml content
+      const content = (await importYml()) as string;
+
+      // Parse the YAML content
+      const parsedData = YAML.parse(content);
+
+      if (!Array.isArray(parsedData)) {
+        console.error(`Invalid YAML format in other.yml for board ${boardDir}`);
+        return [];
+      }
+
+      // Transform the data to match SysMetaData interface
+      return parsedData.map((item: any) => ({
+        sys: item.sys,
+        sys_ver: item.sys_ver,
+        sys_var: item.sys_var,
+        status: item.status.toUpperCase(),
+        last_update: null,
+        sysDir: null,
+        boardDir: boardDir,
+        fileName: null,
+      }));
+    } catch (readError) {
+      console.error(
+        `Failed to read other.yml data for board ${boardDir}:`,
+        readError,
+      );
+      return [];
+    }
+  } catch (error) {
+    console.error(
+      `Error fetching other.yml data for board ${boardDir}:`,
+      error,
+    );
+    return [];
+  }
+}
+
+/**
+ * Gets all system data for all available boards, including other systems
+ * @returns Promise with an array of system data
+ */
+export async function getAllSysDataWithOther(): Promise<SysMetaData[]> {
+  const boards = await getAllBoards();
+
+  // Get all regular system data
+  const allSysDataPromises = boards.flatMap(async (boardDir) => {
+    const sysDirInfos = await getBoardSysDirs(boardDir);
+    return sysDirInfos.map((info) =>
+      getSysData(boardDir, info.sysDir, info.fileName),
+    );
+  });
+
+  // Get all other system data
+  const allOtherSysDataPromises = boards.map((boardDir) =>
+    getBoardOtherSysData(boardDir),
+  );
+
+  // Wait for all promises to resolve
+  const [allSysDataNestedPromises, allOtherSysData] = await Promise.all([
+    Promise.all(allSysDataPromises),
+    Promise.all(allOtherSysDataPromises),
+  ]);
+
+  // Flatten and combine all system data
+  const allSysData = await Promise.all(allSysDataNestedPromises.flat());
+  const combinedSysData = [...allSysData, ...allOtherSysData.flat()];
+
+  // Filter out null values (systems that couldn't be fetched)
+  return combinedSysData.filter((data): data is SysMetaData => data !== null);
 }

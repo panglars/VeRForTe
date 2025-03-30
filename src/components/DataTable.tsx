@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useMemo, useState } from "react";
 import {
   createColumnHelper,
@@ -39,12 +40,14 @@ const StatusCell = ({
   boardDir,
   systemDir,
   fileName,
+  lastUpdate,
 }: {
   status: string | null;
   lang: string;
   boardDir: string;
   systemDir: string;
   fileName: string;
+  lastUpdate: string;
 }) => {
   if (!status) return <span>-</span>;
 
@@ -67,7 +70,9 @@ const StatusCell = ({
     </span>
   );
 
-  return (
+  return lastUpdate == null ? (
+    <span className="no-underline">{statusElement}</span>
+  ) : (
     <a
       href={getRelativeLocaleUrl(
         lang,
@@ -91,83 +96,22 @@ export default function DataTable({
   statusMatrix,
   categoryName,
 }: DataTableProps) {
+  const { columns, data } = useTableConfig({
+    lang,
+    boards,
+    systems,
+    systemList,
+    statusMatrix,
+  });
+
   const [sorting, setSorting] = useState<SortingState>([
-    {
-      id: "board",
-      desc: false,
-    },
+    { id: "board", desc: false },
   ]);
 
-  const columnHelper = createColumnHelper<{
-    board: BoardMetaData;
-    statuses: (string | null)[];
-  }>();
-
-  const columns = useMemo(() => {
-    // Create board column
-    const boardColumn = columnHelper.accessor("board", {
-      header: "Board",
-      cell: (info) => info.getValue().product,
-      sortingFn: (rowA, rowB) => {
-        return rowA.original.board.product.localeCompare(
-          rowB.original.board.product,
-        );
-      },
-    });
-
-    // Create system columns
-    const systemColumns = systemList.map((system, index) =>
-      columnHelper.accessor((row) => row.statuses[index], {
-        id: system.id,
-        header: system.name,
-        cell: (info) => {
-          const systemInfo: SysMetaData | undefined = systems.find(
-            (s) => s.sys === system.id,
-          );
-          return (
-            <StatusCell
-              status={info.getValue()}
-              lang={lang}
-              boardDir={info.row.original.board.dir}
-              systemDir={systemInfo?.sysDir}
-              fileName={systemInfo?.fileName}
-            />
-          );
-        },
-
-        sortingFn: (rowA, rowB) => {
-          const statusA = rowA.original.statuses[index] || "";
-          const statusB = rowB.original.statuses[index] || "";
-          return statusA.localeCompare(statusB);
-        },
-      }),
-    );
-
-    return [boardColumn, ...systemColumns];
-  }, [systemList, lang]);
-
-  // Prepare data for the table
-  const data = useMemo(
-    () =>
-      boards.map((board, rowIndex) => ({
-        board,
-        statuses: statusMatrix[rowIndex] || [],
-      })),
-    [boards, statusMatrix],
-  );
-
-  const filteredData = useMemo(() => {
-    return data.filter((row) => {
-      return row.statuses.some((status) => status !== null && status !== "");
-    });
-  }, [data]);
-
   const table = useReactTable({
-    data: filteredData,
+    data,
     columns,
-    state: {
-      sorting,
-    },
+    state: { sorting },
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     getCoreRowModel: getCoreRowModel(),
@@ -184,20 +128,21 @@ export default function DataTable({
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className={`${header.id === "board" ? "min-w-[200px]" : ""} ${header.column.getCanSort() ? "cursor-pointer select-none" : ""}`}
+                    className={clsx(
+                      header.id === "board" && "min-w-[200px]",
+                      header.column.getCanSort() &&
+                        "cursor-pointer select-none",
+                    )}
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     <div className="flex items-center">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                      {{
-                        asc: "↑",
-                        desc: "↓",
-                      }[header.column.getIsSorted() as string] || null}
+                      {!header.isPlaceholder &&
+                        flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                      {header.column.getIsSorted() &&
+                        (header.column.getIsSorted() === "asc" ? "↑" : "↓")}
                     </div>
                   </TableHead>
                 ))}
@@ -238,4 +183,69 @@ export default function DataTable({
       </div>
     </div>
   );
+}
+
+function useTableConfig({ lang, boards, systems, systemList, statusMatrix }) {
+  const columnHelper = createColumnHelper<{
+    board: BoardMetaData;
+    statuses: (string | null)[];
+  }>();
+
+  const columns = useMemo(() => {
+    const boardColumn = columnHelper.accessor("board", {
+      header: "Board",
+      cell: (info) => info.getValue().product,
+      sortingFn: (rowA, rowB) =>
+        rowA.original.board.product.localeCompare(rowB.original.board.product),
+    });
+
+    const systemColumns = systemList.map((system, index) => {
+      return columnHelper.accessor((row) => row.statuses[index], {
+        id: system.id,
+        header: system.name,
+        cell: (info) => {
+          const boardDir = info.row.original.board.dir;
+          const systemInfo = systems.find(
+            (s) => s.sys === system.id && s.boardDir === boardDir,
+          );
+          return (
+            <StatusCell
+              status={info.getValue()}
+              lang={lang}
+              boardDir={info.row.original.board.dir}
+              systemDir={systemInfo?.sysDir}
+              fileName={systemInfo?.fileName}
+              lastUpdate={systemInfo?.last_update}
+            />
+          );
+        },
+        sortingFn: (rowA, rowB) => {
+          const statusA = rowA.original.statuses[index] || "";
+          const statusB = rowB.original.statuses[index] || "";
+          return statusA.localeCompare(statusB);
+        },
+      });
+    });
+
+    return [boardColumn, ...systemColumns];
+  }, [systemList, lang, systems]);
+
+  const rawData = useMemo(
+    () =>
+      boards.map((board, rowIndex) => ({
+        board,
+        statuses: statusMatrix[rowIndex] || [],
+      })),
+    [boards, statusMatrix],
+  );
+
+  const data = useMemo(
+    () =>
+      rawData.filter((row) =>
+        row.statuses.some((status) => status !== null && status !== ""),
+      ),
+    [rawData],
+  );
+
+  return { columns, data };
 }
