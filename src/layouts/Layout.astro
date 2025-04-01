@@ -1,7 +1,6 @@
 ---
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
-import Analytics from "@vercel/analytics/astro";
 import { getLangFromUrl, useTranslations } from "../i18n/utils";
 import { ClientRouter } from "astro:transitions";
 
@@ -23,7 +22,6 @@ const t = useTranslations(lang);
     <meta property="og:title" content=`${title} ${t("og.title")}` />
     <title>{title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <Analytics />
     <ClientRouter />
   </head>
   <body class="min-h-screen bg-background text-foreground">

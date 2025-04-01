@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 # Support Matrix Frontend
-
-RISC-V Board and OS Support Matrix Website
 
 RISC-V Board and OS Support Matrix Website
 

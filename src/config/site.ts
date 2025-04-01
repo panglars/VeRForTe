@@ -1,10 +1,10 @@
 export const siteConfig = {
-  name: "VeRForTe",
-  url: "https://verforte.vercel.app",
+  name: "RuyiSDK",
+  url: "https://matrix.ruyisdk.org",
   description: "RISC-V Board and OS Support Matrix",
   description_zh: "RISC-V 开发版和操作系统支持矩阵",
   links: {
-    github: "https://github.com/panglars/VeRForTe",
+    github: "https://github.com/QA-Team-lo/support-matrix-frontend",
   },
 };
 

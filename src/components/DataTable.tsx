@@ -49,7 +49,7 @@ const StatusCell = ({
   fileName: string;
   lastUpdate: string;
 }) => {
-  if (!status) return <span>-</span>;
+  if (!status) return <span className="text--muted-foreground">-</span>;
 
   const statusClass =
     status === "GOOD"
@@ -122,16 +122,17 @@ export default function DataTable({
   return (
     <div className="w-full mb-12">
       <h2 className="text-2xl font-bold mt-10 mb-4">{categoryName}</h2>
-      <div className="overflow-x-auto w-full">
-        <Table className="w-full">
-          <TableHeader>
+      <div className="w-full relative">
+        <Table>
+          <TableHeader className="sticky top-0 z-30 bg-background">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
                     className={clsx(
-                      header.id === "board" && "min-w-[200px]",
+                      header.id === "board" &&
+                        "left-0 bg-background z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]",
                       header.column.getCanSort() &&
                         "cursor-pointer select-none",
                     )}
@@ -154,13 +155,15 @@ export default function DataTable({
           <TableBody>
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} className="group">
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className={
-                        cell.column.id === "board" ? "font-medium" : ""
-                      }
+                      className={clsx(
+                        cell.column.id === "board" &&
+                          "font-medium sticky left-0 bg-background z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]",
+                        "group-hover:bg-muted/80",
+                      )}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
