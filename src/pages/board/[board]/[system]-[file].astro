@@ -49,7 +49,7 @@ try {
   if (!board) {
     error = `Board information for "${boardDir}" not found`;
   } else {
-    sysData = await getSysData(boardDir, sysDir, "README");
+    sysData = await getSysData(boardDir, sysDir, fileName);
     if (!sysData) {
       error = `System information for "${sysDir}" not found`;
     } else {
