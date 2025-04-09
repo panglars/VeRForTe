@@ -61,6 +61,17 @@ const currentPath = Astro.url.pathname;
         </a>
 
         <div class="flex items-center lg:hidden">
+          <a
+            href={siteConfig.links.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: "none" }}
+          >
+            <Button variant="ghost" size="icon">
+              <Github className="h-5 w-5" />
+            </Button>
+          </a>
+
           <LangToggle client:load currentPath={currentPath} />
           <ModeToggle client:load />
         </div>
