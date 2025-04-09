@@ -1,10 +1,11 @@
 export const siteConfig = {
   name: "RuyiSDK",
   url: "https://matrix.ruyisdk.org",
-  description: "RISC-V Board and OS Support Matrix",
-  description_zh: "RISC-V 开发版和操作系统支持矩阵",
+  title: "RISC-V Board and OS Support Matrix",
+  title_zh: "RISC-V 开发版和操作系统支持矩阵",
   links: {
-    github: "https://github.com/QA-Team-lo/support-matrix-frontend",
+    github: "https://github.com/ruyisdk/support-matrix",
+    ruyisdk: "https://ruyisdk.org/",
   },
 };
 

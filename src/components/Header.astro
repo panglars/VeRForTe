@@ -4,6 +4,8 @@ import { ModeToggle } from "./ModeToggle";
 import { LangToggle } from "./LangToggle";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { getLangFromUrl, useTranslations } from "@/i18n/utils";
+import { Github } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -51,11 +53,12 @@ const currentPath = Astro.url.pathname;
     <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center">
       <div class="flex justify-between items-center">
         <a
-          href={getRelativeLocaleUrl(lang, "", {
-            normalizeLocale: false,
-          })}
-          class="text-xl font-bold">{siteConfig.name}</a
+          href={siteConfig.links.ruyisdk}
+          class="text-xl font-bold flex items-center gap-2"
         >
+          <img src="/favicon.svg" alt="Logo" class="h-8 w-8" />
+          {siteConfig.name}
+        </a>
 
         <div class="flex items-center lg:hidden">
           <LangToggle client:load currentPath={currentPath} />
@@ -67,21 +70,39 @@ const currentPath = Astro.url.pathname;
         class="flex flex-col lg:flex-row mt-4 lg:mt-0 space-y-4 lg:space-y-0"
       >
         <a
+          href={getRelativeLocaleUrl(lang, "", {
+            normalizeLocale: false,
+          })}
+          class="text-xl lg:mx-6">{t("nav.board")}</a
+        >
+
+        <a
           href={getRelativeLocaleUrl(lang, "sheet/", {
             normalizeLocale: false,
           })}
-          class="text-xl lg:mr-8">{t("nav.table")}</a
+          class="text-xl lg:mx-6">{t("nav.table")}</a
         >
 
         <a
           href={getRelativeLocaleUrl(lang, "list/", {
             normalizeLocale: false,
           })}
-          class="text-xl lg:mr-8">{t("nav.list")}</a
+          class="text-xl lg:mx-6">{t("nav.list")}</a
         >
       </nav>
 
       <div class="hidden lg:flex items-center">
+        <a
+          href={siteConfig.links.github}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ textDecoration: "none" }}
+        >
+          <Button variant="ghost" size="icon">
+            <Github className="h-5 w-5" />
+          </Button>
+        </a>
+
         <LangToggle client:load currentPath={currentPath} />
         <ModeToggle client:load />
       </div>

@@ -7,8 +7,9 @@ export const defaultLang = "en";
 
 export const ui = {
   en: {
-    "nav.table": "Support Matrix",
-    "nav.list": "Support List",
+    "nav.board": "Board Overview",
+    "nav.table": "OS Support",
+    "nav.list": "Test Reports",
     cpu: "CPU",
     core: "Core",
     "sys.status": "Status",
@@ -18,8 +19,9 @@ export const ui = {
     "og.title": "Test Report",
   },
   zh_CN: {
-    "nav.table": "支持矩阵",
-    "nav.list": "支持列表",
+    "nav.board": "开发板总览",
+    "nav.table": "系统支持",
+    "nav.list": "测试报告",
     cpu: "处理器",
     core: "核心",
     "sys.status": "支持状态",
