@@ -17,6 +17,7 @@ export const ui = {
     "sys.version": "Version",
     "sys.update": "Last Update",
     "og.title": "Test Report",
+    searchbar: "Search boards...",
   },
   zh_CN: {
     "nav.board": "开发板总览",
@@ -29,5 +30,6 @@ export const ui = {
     "sys.version": "系统版本",
     "sys.update": "最后更新",
     "og.title": "测试报告",
+    searchbar: "查找开发板...",
   },
 } as const;
