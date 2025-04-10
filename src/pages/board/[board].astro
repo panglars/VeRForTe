@@ -58,12 +58,18 @@ try {
             </CardHeader>
             <CardContent>
               <div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <h3 class="text-sm font-medium text-muted-foreground">
                       CPU
                     </h3>
                     <p class="text-lg">{board!.cpu}</p>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-medium text-muted-foreground">
+                      RAM
+                    </h3>
+                    <p class="text-lg">{board!.ram}</p>
                   </div>
                   <div>
                     <h3 class="text-sm font-medium text-muted-foreground">

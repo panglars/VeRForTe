@@ -2,9 +2,11 @@ import YAML from "yaml";
 
 // Interface for board meta data
 export interface BoardMetaData {
+  vendor: string | null;
   product: string;
   cpu: string;
   cpu_core: string;
+  ram: string;
   dir: string;
 }
 
@@ -51,15 +53,19 @@ export async function getBoardData(
       const content = (await importReadme()) as string;
 
       // Extract metadata from the content
+      const vendor = extractMetadata(content, "vendor");
       const product = extractMetadata(content, "product");
       const cpu = extractMetadata(content, "cpu");
       const cpu_core = extractMetadata(content, "cpu_core");
+      const ram = extractMetadata(content, "ram");
 
       return {
+        vendor: vendor,
         product: product || "Not specified",
         cpu: cpu || "Not specified",
         cpu_core: cpu_core || "Not specified",
-        dir: boardDir || "Not specified",
+        ram: ram || "Not specified",
+        dir: boardDir,
       };
     } catch (readError) {
       console.error(`Failed to read data for board ${boardDir}:`, readError);

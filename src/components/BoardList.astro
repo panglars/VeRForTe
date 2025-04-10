@@ -1,78 +1,16 @@
 ---
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "./ui/card";
-
 import type { BoardMetaData } from "../lib/data";
-import SearchBar from "./SearchBar.tsx";
-import { getLangFromUrl, useTranslations } from "@/i18n/utils";
-import { getRelativeLocaleUrl } from "astro:i18n";
+import { getLangFromUrl } from "@/i18n/utils";
+import BoardsGrid from "./BoardsGrid";
 
 export interface Props {
   boards: BoardMetaData[];
 }
 
 const lang = getLangFromUrl(Astro.url);
-const t = useTranslations(lang);
-
 const { boards } = Astro.props;
 ---
 
 <div>
-  <SearchBar client:load boards={boards} />
-
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {
-      boards.map((board) => (
-        <div
-          class="board-card"
-          data-product={board.product}
-          data-cpu={board.cpu}
-          data-cpu-core={board.cpu_core}
-        >
-          <a
-            href={getRelativeLocaleUrl(lang, `board/${board.dir}`, {
-              normalizeLocale: false,
-            })}
-            class=""
-          >
-            <Card className="h-full transition-transform duration-200 hover:bg-muted hover:shadow-lg hover:translate-y-[-0.25rem]">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold">
-                  {board.product}
-                </CardTitle>
-                <CardDescription />
-              </CardHeader>
-              <CardContent>
-                <div class="space-y-2 text-muted-foreground">
-                  <div class="grid grid-cols-4">
-                    <span class="text-sm">{t("cpu")}</span>
-                    <span class="text-right font-medium col-span-3 text-secondary-foreground">
-                      {board.cpu}
-                    </span>
-                  </div>
-                  <div class="grid grid-cols-4">
-                    <span class="text-sm">{t("core")}</span>
-                    <span class="text-right font-medium col-span-3 text-secondary-foreground">
-                      {board.cpu_core}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </a>
-        </div>
-      ))
-    }
-  </div>
-
-  <div id="no-results" class="text-center p-8 border rounded-lg mt-8 hidden">
-    <p class="text-muted-foreground">
-      No boards found matching your search criteria.
-    </p>
-  </div>
+  <BoardsGrid client:load boards={boards} lang={lang} />
 </div>
