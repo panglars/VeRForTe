@@ -19,6 +19,10 @@ export const ui = {
     "sys.update": "Last Update",
     "og.title": "Test Report",
     search_placeholder: "Search board, cpu, core ...",
+    no_board_results: "No boards found matching your search criteria",
+    "sort.ruyi": "Ruyisdk Support",
+    "sort.asc": "Board Name A-Z",
+    "sort.desc": "Board Name Z-A",
   },
   zh_CN: {
     "nav.board": "开发板总览",
@@ -33,5 +37,9 @@ export const ui = {
     "sys.update": "最后更新",
     "og.title": "测试报告",
     search_placeholder: "查找开发板,处理器,核心...",
+    no_board_results: "未找到符合您搜索条件的开发板",
+    "sort.ruyi": "Ruyisdk 支持",
+    "sort.asc": "开发板名称 A-Z",
+    "sort.desc": "开发版名称 Z-A",
   },
 } as const;

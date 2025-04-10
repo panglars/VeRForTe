@@ -38,7 +38,6 @@ interface SortOption {
   label: string;
   field: SortField;
   direction: SortDirection;
-  // Add custom sort function
   sortFn?: (a: BoardMetaData, b: BoardMetaData) => number;
 }
 
@@ -50,7 +49,7 @@ const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
   const sortOptions: SortOption[] = [
     {
       id: "vendor-asc",
-      label: "Ruyisdk Support",
+      label: t("sort.ruyi"),
       field: "vendor",
       direction: "asc",
       // Custom sort function for Ruyisdk Support
@@ -70,14 +69,14 @@ const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
     },
     {
       id: "product-asc",
-      label: "A-Z",
+      label: t("sort.asc"),
       field: "product",
       direction: "asc",
       sortFn: (a, b) => a.product.localeCompare(b.product),
     },
     {
       id: "product-desc",
-      label: "Z-A",
+      label: t("sort.desc"),
       field: "product",
       direction: "desc",
       sortFn: (a, b) => b.product.localeCompare(a.product),
@@ -173,16 +172,6 @@ const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
     sortBoards(boardsToSort, sortOption);
   };
 
-  // Safely access translation with fallback
-  const getTranslation = (key: string, fallback: string): string => {
-    try {
-      // @ts-ignore - We're using a string key instead of the exact type
-      return typeof t === "function" ? t(key) || fallback : fallback;
-    } catch (error) {
-      return fallback;
-    }
-  };
-
   return (
     <div>
       {/* Search Bar - Styled like the original SearchBar component */}
@@ -195,10 +184,7 @@ const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
             type="text"
             value={searchQuery}
             onChange={handleSearch}
-            placeholder={getTranslation(
-              "search_placeholder",
-              "Search boards...",
-            )}
+            placeholder={t("search_placeholder") || "Search boards..."}
             className="pl-12 py-6 w-full text-lg rounded-md border border-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             aria-label="Search boards"
             autoComplete="off"
@@ -219,10 +205,8 @@ const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
       {!hasResults && (
         <div className="text-center p-8 border rounded-lg mt-8">
           <p className="text-muted-foreground">
-            {getTranslation(
-              "no_results",
-              "No boards found matching your search criteria.",
-            )}
+            {t("no_board_results") ||
+              "No boards found matching your search criteria."}
           </p>
         </div>
       )}
@@ -247,25 +231,19 @@ const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
                   <CardContent>
                     <div className="space-y-2 text-muted-foreground">
                       <div className="grid grid-cols-4">
-                        <span className="text-sm">
-                          {getTranslation("cpu", "CPU")}
-                        </span>
+                        <span className="text-sm">{t("cpu")}</span>
                         <span className="text-right font-medium col-span-3 text-secondary-foreground">
                           {board.cpu}
                         </span>
                       </div>
                       <div className="grid grid-cols-4">
-                        <span className="text-sm">
-                          {getTranslation("ram", "RAM")}
-                        </span>
+                        <span className="text-sm">{t("ram")}</span>
                         <span className="text-right font-medium col-span-3 text-secondary-foreground">
                           {board.ram}
                         </span>
                       </div>
                       <div className="grid grid-cols-4">
-                        <span className="text-sm">
-                          {getTranslation("core", "Core")}
-                        </span>
+                        <span className="text-sm">{t("core")}</span>
                         <span className="text-right font-medium col-span-3 text-secondary-foreground">
                           {board.cpu_core}
                         </span>

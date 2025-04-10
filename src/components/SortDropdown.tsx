@@ -1,22 +1,19 @@
-// SortDropdown.tsx
 import React from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
-import { ChevronDown } from "lucide-react";
+import { ArrowDownWideNarrow, ChevronDown } from "lucide-react";
 
 interface SortOption {
   id: string;
   label: string;
   field: string;
   direction: "asc" | "desc";
+  sortFn?: (a: any, b: any) => number;
 }
 
 interface SortDropdownProps {
@@ -30,34 +27,29 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
   currentSort,
   onSortChange,
 }) => {
-  const handleSortChange = (id: string) => {
-    const option = options.find((opt) => opt.id === id);
-    if (option) {
-      onSortChange(option);
-    }
+  const handleSortChange = (option: SortOption) => {
+    onSortChange(option);
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
-          <span>Sort: {currentSort.label}</span>
+        <Button variant="outline" className="flex items-center gap-2 w-48">
+          <ArrowDownWideNarrow className="h-4 w-4" />
+          <span>{currentSort.label}</span>
           <ChevronDown className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Sort By</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup
-          value={currentSort.id}
-          onValueChange={handleSortChange}
-        >
-          {options.map((option) => (
-            <DropdownMenuRadioItem key={option.id} value={option.id}>
-              {option.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
+      <DropdownMenuContent align="end" className="w-48">
+        {options.map((option) => (
+          <DropdownMenuItem
+            key={option.id}
+            onClick={() => handleSortChange(option)}
+            className="flex items-center justify-between"
+          >
+            {option.label}
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );
