@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/command";
 import type { BoardMetaData, SysMetaData } from "@/lib/data";
 import { getRelativeLocaleUrl } from "astro:i18n";
+import { useTranslations } from "@/i18n/utils";
 
 // Filter component using shadcn's combobox pattern
 interface ComboboxProps {
@@ -67,9 +68,7 @@ function Combobox({
       </PopoverTrigger>
       <PopoverContent className="w-full md:w-[200px] p-0">
         <Command>
-          <CommandInput
-            placeholder={`Search ${placeholder.toLowerCase()}...`}
-          />
+          <CommandInput placeholder={`${placeholder.toLowerCase()}...`} />
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
@@ -111,6 +110,7 @@ function Combobox({
 }
 
 // Status cell component
+// Status cell component - modified to remove the link
 const StatusCell = ({
   status,
   lang,
@@ -140,25 +140,11 @@ const StatusCell = ({
               ? "bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-800 dark:text-fuchsia-100"
               : "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100";
 
-  const statusElement = (
+  // Return the status element without wrapping it in an anchor tag
+  return (
     <span className={`inline-block px-2 rounded-md font-medium ${statusClass}`}>
       {status}
     </span>
-  );
-
-  return (
-    <a
-      href={getRelativeLocaleUrl(
-        lang,
-        `board/${boardDir}/${systemDir}-${fileName}`,
-        {
-          normalizeLocale: false,
-        },
-      )}
-      className="no-underline"
-    >
-      {statusElement}
-    </a>
   );
 };
 
@@ -171,6 +157,8 @@ interface ListTableProps {
 
 // Main component
 export default function ListTable({ lang, boards, systems }: ListTableProps) {
+  const t = useTranslations(lang);
+
   // State management
   const [sorting, setSorting] = useState<SortingState>([
     { id: "last_update", desc: true },
@@ -286,19 +274,19 @@ export default function ListTable({ lang, boards, systems }: ListTableProps) {
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-6 mb-6">
         <Combobox
-          placeholder="Select Board"
+          placeholder={t("select_board")}
           options={boardOptions}
           value={boardFilter}
           onChange={setBoardFilter}
         />
         <Combobox
-          placeholder="Select System"
+          placeholder={t("select_system")}
           options={systemOptions}
           value={systemFilter}
           onChange={setSystemFilter}
         />
         <Combobox
-          placeholder="Select Status"
+          placeholder={t("select_status")}
           options={statusOptions}
           value={statusFilter}
           onChange={setStatusFilter}
@@ -335,7 +323,20 @@ export default function ListTable({ lang, boards, systems }: ListTableProps) {
           <TableBody>
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => {
+                    // Navigate to the board page when the row is clicked
+                    window.location.href = getRelativeLocaleUrl(
+                      lang,
+                      `board/${row.original.boardDir}/${row.original.sysDir}-${row.original.fileName}`,
+                      {
+                        normalizeLocale: false,
+                      },
+                    );
+                  }}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(

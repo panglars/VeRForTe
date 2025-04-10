@@ -23,6 +23,9 @@ export const ui = {
     "sort.ruyi": "Ruyisdk Support",
     "sort.asc": "Board Name A-Z",
     "sort.desc": "Board Name Z-A",
+    select_board: "Select Board",
+    select_system: "Select System",
+    select_status: "Select Support Status",
   },
   zh_CN: {
     "nav.board": "开发板总览",
@@ -41,5 +44,8 @@ export const ui = {
     "sort.ruyi": "Ruyisdk 支持",
     "sort.asc": "开发板名称 A-Z",
     "sort.desc": "开发版名称 Z-A",
+    select_board: "筛选开发板",
+    select_system: "筛选操作系统",
+    select_status: "筛选支持状态",
   },
 } as const;

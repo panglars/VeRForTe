@@ -11,7 +11,7 @@ import {
 } from "./ui/card";
 import { Input } from "./ui/input";
 import { Search as SearchIcon } from "lucide-react";
-import { ui, defaultLang } from "@/i18n/ui";
+import { ui } from "@/i18n/ui";
 import { useTranslations } from "@/i18n/utils";
 
 interface BoardMetaData {
