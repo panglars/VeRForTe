@@ -221,7 +221,7 @@ const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
                   normalizeLocale: false,
                 })}
               >
-                <Card className="h-full transition-transform duration-200 hover:bg-muted hover:shadow-lg hover:translate-y-[-0.25rem]">
+                <Card className="h-56 transition-transform duration-200 hover:bg-muted hover:shadow-lg hover:translate-y-[-0.25rem]">
                   <CardHeader>
                     <CardTitle className="flex justify-between text-lg font-semibold">
                       <div>{board.product}</div>
