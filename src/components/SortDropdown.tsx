@@ -34,7 +34,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2 w-48">
+        <Button variant="outline" className="flex justify-between w-48">
           <ArrowDownWideNarrow className="h-4 w-4" />
           <span>{currentSort.label}</span>
           <ChevronDown className="h-4 w-4" />

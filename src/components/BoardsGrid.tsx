@@ -223,8 +223,15 @@ const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
               >
                 <Card className="h-full transition-transform duration-200 hover:bg-muted hover:shadow-lg hover:translate-y-[-0.25rem]">
                   <CardHeader>
-                    <CardTitle className="text-lg font-semibold">
-                      {board.product}
+                    <CardTitle className="flex justify-between text-lg font-semibold">
+                      <div>{board.product}</div>
+                      {board.vendor && (
+                        <img
+                          src="/favicon.svg"
+                          alt="Ruyi"
+                          className="h-6 w-6"
+                        />
+                      )}
                     </CardTitle>
                     <CardDescription />
                   </CardHeader>
