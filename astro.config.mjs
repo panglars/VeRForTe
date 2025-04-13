@@ -10,6 +10,8 @@ import rehypeGithubAlert from "rehype-github-alert";
 
 // https://astro.build/config
 export default defineConfig({
+    site: "https://matrix.ruyisdk.org",
+
     integrations: [react()],
 
     i18n: {

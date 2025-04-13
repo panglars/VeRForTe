@@ -10,7 +10,7 @@ const systems = await getAllSysData();
 const lang = getLangFromUrl(Astro.url);
 ---
 
-<Layout title="Development Boards">
+<Layout title="Test Reports List">
   <div class="container mx-auto py-6">
     <ListTable client:load boards={boards} systems={systems} lang={lang} />
   </div>
