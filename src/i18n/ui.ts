@@ -33,6 +33,7 @@ export const ui = {
     bsd: "*BSD Systems",
     rtos: "RTOS / Real-Time Operating Systems",
     others: "Other Systems",
+    loading: "Loading...",
   },
   zh_CN: {
     "nav.board": "开发板总览",
@@ -61,5 +62,6 @@ export const ui = {
     bsd: "*BSD 系统",
     rtos: "RTOS/实时操作系统",
     others: "其他系统",
+    loading: "加载中...",
   },
 } as const;

@@ -125,7 +125,7 @@ export default function Matrix({
   const defaultTab = categoryData.length > 0 ? categoryData[0].categoryId : "";
 
   if (isLoading) {
-    return <div className="w-full py-10 px-4">Loading...</div>;
+    return <div className="w-full py-10 px-4">{t("loading")}</div>;
   }
 
   return (
