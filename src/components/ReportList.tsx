@@ -149,14 +149,14 @@ const StatusCell = ({
 };
 
 // Main component interface
-interface ListTableProps {
+interface ReportListProps {
   lang: string;
   boards: BoardMetaData[];
   systems: SysMetaData[];
 }
 
 // Main component
-export default function ListTable({ lang, boards, systems }: ListTableProps) {
+export default function ReportList({ lang, boards, systems }: ReportListProps) {
   const t = useTranslations(lang);
 
   // State management
