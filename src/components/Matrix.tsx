@@ -47,8 +47,16 @@ export default function Matrix({
   useEffect(() => {
     async function loadMetadata() {
       try {
-        const response = await fetch(metadataPath);
-        const metadataText = await response.text();
+        const metadataFiles = import.meta.glob(
+          "/support-matrix/assets/metadata.yml",
+          {
+            query: "?raw",
+            import: "default",
+          },
+        );
+
+        const importMetadata = metadataFiles[metadataPath];
+        const metadataText = await importMetadata();
         const metadata = YAML.parse(metadataText) as MetadataStructure;
 
         const categories: CategoryMap = {};
