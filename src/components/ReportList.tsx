@@ -41,6 +41,7 @@ interface ComboboxProps {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  lang: string;
 }
 
 function Combobox({
@@ -48,8 +49,11 @@ function Combobox({
   value,
   onChange,
   placeholder,
+  lang,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
+
+  const t = useTranslations(lang);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -70,7 +74,7 @@ function Combobox({
         <Command>
           <CommandInput placeholder={`${placeholder.toLowerCase()}...`} />
           <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty>{t("no_results")}</CommandEmpty>
             <CommandGroup>
               <CommandItem
                 value="all"
@@ -110,7 +114,6 @@ function Combobox({
 }
 
 // Status cell component
-// Status cell component - modified to remove the link
 const StatusCell = ({
   status,
   lang,
@@ -174,27 +177,27 @@ export default function ReportList({ lang, boards, systems }: ReportListProps) {
   const columns = useMemo(
     () => [
       columnHelper.accessor("boardDir", {
-        header: "Board",
+        header: t("board"),
         cell: (info) => {
           const boardData = boards.find((b) => b.dir === info.getValue());
           return boardData ? boardData.product : info.getValue();
         },
       }),
       columnHelper.accessor("sysDir", {
-        header: "System",
+        header: t("system"),
         cell: (info) => info.getValue(),
       }),
       columnHelper.accessor("sys_ver", {
-        header: "Version",
+        header: t("sys.version"),
         cell: (info) => info.getValue(),
       }),
       columnHelper.accessor("sys_var", {
-        header: "Variant",
+        header: t("sys.variant"),
         cell: (info) => info.getValue(),
       }),
 
       columnHelper.accessor("status", {
-        header: "Status",
+        header: t("sys.status"),
         cell: (info) => (
           <StatusCell
             status={info.getValue()}
@@ -206,7 +209,7 @@ export default function ReportList({ lang, boards, systems }: ReportListProps) {
         ),
       }),
       columnHelper.accessor("last_update", {
-        header: "Last Update",
+        header: t("sys.update"),
         cell: (info) => info.getValue(),
       }),
     ],
@@ -272,24 +275,27 @@ export default function ReportList({ lang, boards, systems }: ReportListProps) {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-6 mb-6">
+      <div className="flex flex-col md:flex-row justify-center gap-6 mb-6">
         <Combobox
           placeholder={t("select_board")}
           options={boardOptions}
           value={boardFilter}
           onChange={setBoardFilter}
+          lang={lang}
         />
         <Combobox
           placeholder={t("select_system")}
           options={systemOptions}
           value={systemFilter}
           onChange={setSystemFilter}
+          lang={lang}
         />
         <Combobox
           placeholder={t("select_status")}
           options={statusOptions}
           value={statusFilter}
           onChange={setStatusFilter}
+          lang={lang}
         />
       </div>
 
@@ -327,7 +333,6 @@ export default function ReportList({ lang, boards, systems }: ReportListProps) {
                   key={row.id}
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => {
-                    // Navigate to the board page when the row is clicked
                     window.location.href = getRelativeLocaleUrl(
                       lang,
                       `board/${row.original.boardDir}/${row.original.sysDir}-${row.original.fileName}`,
@@ -353,7 +358,7 @@ export default function ReportList({ lang, boards, systems }: ReportListProps) {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No matching data found
+                  {t("no_results")}
                 </TableCell>
               </TableRow>
             )}

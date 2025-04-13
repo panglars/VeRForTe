@@ -6,7 +6,7 @@ import { useTranslations } from "@/i18n/utils";
 import type { BoardMetaData, SysMetaData } from "@/lib/data";
 
 // TypeScript interfaces
-interface SystemEntry {
+export interface SystemEntry {
   [id: string]: string;
 }
 interface MetadataStructure {

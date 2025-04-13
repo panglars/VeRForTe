@@ -19,17 +19,13 @@ import {
 
 import { getRelativeLocaleUrl } from "astro:i18n";
 import type { BoardMetaData, SysMetaData } from "@/lib/data";
-
-interface SystemListItem {
-  id: string;
-  name: string;
-}
+import type { SystemEntry } from "./Matrix";
 
 interface DataTableProps {
   lang: string;
   boards: BoardMetaData[];
   systems: SysMetaData[];
-  systemList: SystemListItem[];
+  systemList: SystemEntry[];
   statusMatrix: (string | null)[][];
   categoryName: string;
 }

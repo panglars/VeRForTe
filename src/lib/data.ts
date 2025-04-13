@@ -91,7 +91,6 @@ function extractFrontmatter(content: string): Record<string, any> | null {
   const frontmatterText = frontmatterMatch[1];
 
   try {
-    // Parse the frontmatter text using YAML library
     const frontmatter = YAML.parse(frontmatterText);
 
     // Convert empty strings to null for consistency
@@ -195,11 +194,11 @@ export async function getSysData(
       }
 
       return {
-        sys: frontmatter.sys || "Not specified",
+        sys: frontmatter.sys,
         sys_ver: frontmatter.sys_ver,
         sys_var: frontmatter.sys_var,
         status: frontmatter.status.toUpperCase(),
-        last_update: frontmatter.last_update || "Not specified",
+        last_update: frontmatter.last_update,
         sysDir: sysDir,
         boardDir: boardDir,
         fileName: fileName,
