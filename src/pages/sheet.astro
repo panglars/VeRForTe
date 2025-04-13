@@ -1,15 +1,20 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import Matrix from "@/components/Matrix.astro";
+import Matrix from "@/components/Matrix";
 import { getAllBoardsData, getAllSysDataWithOther } from "@/lib/data";
+import { getLangFromUrl } from "@/i18n/utils";
 
 // Get all board and system data
 const boardsData = await getAllBoardsData();
 const sysData = await getAllSysDataWithOther();
+
+const lang = getLangFromUrl(Astro.url);
 ---
 
 <Layout title="OS Support Matrix">
   <Matrix
+    client:load
+    lang={lang}
     boardsData={boardsData}
     sysData={sysData}
     metadataPath="/support-matrix/assets/metadata.yml"

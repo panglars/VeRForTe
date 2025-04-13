@@ -26,6 +26,10 @@ export const ui = {
     select_board: "Select Board",
     select_system: "Select System",
     select_status: "Select Support Status",
+    linux: "Linux Distributions",
+    bsd: "*BSD Systems",
+    rtos: "RTOS / Real-Time Operating Systems",
+    others: "Other Systems",
   },
   zh_CN: {
     "nav.board": "开发板总览",
@@ -47,5 +51,9 @@ export const ui = {
     select_board: "筛选开发板",
     select_system: "筛选操作系统",
     select_status: "筛选支持状态",
+    linux: "Linux 发行版",
+    bsd: "*BSD 系统",
+    rtos: "RTOS/实时操作系统",
+    others: "其他系统",
   },
 } as const;

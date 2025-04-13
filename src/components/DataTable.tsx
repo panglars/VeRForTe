@@ -96,7 +96,6 @@ export default function DataTable({
   systems,
   systemList,
   statusMatrix,
-  categoryName,
 }: DataTableProps) {
   const { columns, data } = useTableConfig({
     lang,
@@ -121,7 +120,6 @@ export default function DataTable({
 
   return (
     <div className="w-full mb-12">
-      <h2 className="text-2xl font-bold mt-10 mb-4">{categoryName}</h2>
       <div className="w-full relative">
         <Table>
           <TableHeader className="sticky top-0 z-30 bg-background">
