@@ -35,7 +35,6 @@ import type { BoardMetaData, SysMetaData } from "@/lib/data";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { useTranslations } from "@/i18n/utils";
 
-// Filter component using shadcn's combobox pattern
 interface ComboboxProps {
   options: { value: string; label: string }[];
   value: string;
@@ -129,7 +128,6 @@ const StatusCell = ({
 }) => {
   if (!status) return <span>-</span>;
 
-  // Set different styles based on status
   const statusClass =
     status === "GOOD"
       ? "bg-sky-100 text-sky-800 dark:bg-sky-800 dark:text-sky-100"
@@ -143,7 +141,6 @@ const StatusCell = ({
               ? "bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-800 dark:text-fuchsia-100"
               : "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100";
 
-  // Return the status element without wrapping it in an anchor tag
   return (
     <span className={`inline-block px-2 rounded-md font-medium ${statusClass}`}>
       {status}
@@ -203,8 +200,8 @@ export default function ReportList({ lang, boards, systems }: ReportListProps) {
             status={info.getValue()}
             lang={lang}
             boardDir={info.row.original.boardDir}
-            systemDir={info.row.original.sysDir}
-            fileName={info.row.original.fileName}
+            systemDir={info.row.original.sysDir?.toString()}
+            fileName={info.row.original.fileName?.toString()}
           />
         ),
       }),

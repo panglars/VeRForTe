@@ -28,8 +28,8 @@ interface CategoryDataItem {
 }
 interface MatrixProps {
   lang: string;
-  boardsData: BoardMetaData;
-  sysData: SysMetaData;
+  boardsData: BoardMetaData[];
+  sysData: SysMetaData[];
   metadataPath: string;
 }
 

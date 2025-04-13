@@ -27,7 +27,6 @@ interface DataTableProps {
   systems: SysMetaData[];
   systemList: SystemEntry[];
   statusMatrix: (string | null)[][];
-  categoryName: string;
 }
 
 const StatusCell = ({
@@ -41,9 +40,9 @@ const StatusCell = ({
   status: string | null;
   lang: string;
   boardDir: string;
-  systemDir: string;
-  fileName: string;
-  lastUpdate: string;
+  systemDir: string | null | undefined;
+  fileName: string | null | undefined;
+  lastUpdate: string | null | undefined;
 }) => {
   if (!status) return <span className="text--muted-foreground">-</span>;
 
@@ -184,7 +183,13 @@ export default function DataTable({
   );
 }
 
-function useTableConfig({ lang, boards, systems, systemList, statusMatrix }) {
+function useTableConfig({
+  lang,
+  boards,
+  systems,
+  systemList,
+  statusMatrix,
+}: DataTableProps) {
   const columnHelper = createColumnHelper<{
     board: BoardMetaData;
     statuses: (string | null)[];
