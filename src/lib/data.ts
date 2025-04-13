@@ -53,18 +53,19 @@ export async function getBoardData(
       const content = (await importReadme()) as string;
 
       // Extract metadata from the content
-      const vendor = extractMetadata(content, "vendor");
-      const product = extractMetadata(content, "product");
-      const cpu = extractMetadata(content, "cpu");
-      const cpu_core = extractMetadata(content, "cpu_core");
-      const ram = extractMetadata(content, "ram");
+      const metadata = extractFrontmatter(content);
+
+      if (!metadata) {
+        console.error(`No valid frontmatter found for board ${boardDir}`);
+        return null;
+      }
 
       return {
-        vendor: vendor,
-        product: product || "Not specified",
-        cpu: cpu || "Not specified",
-        cpu_core: cpu_core || "Not specified",
-        ram: ram || "Not specified",
+        vendor: metadata.vendor,
+        product: metadata.product || "Not specified",
+        cpu: metadata.cpu || "Not specified",
+        cpu_core: metadata.cpu_core || "Not specified",
+        ram: metadata.ram || "Not specified",
         dir: boardDir,
       };
     } catch (readError) {
@@ -78,17 +79,33 @@ export async function getBoardData(
 }
 
 /**
- * Extracts metadata from README content
- * @param content The README content
- * @param key The metadata key to extract
- * @returns The extracted value or null if not found
+ * Extracts frontmatter from content
+ * @param content The content with frontmatter
+ * @returns The extracted frontmatter object or null if not found
  */
-function extractMetadata(content: string, key: string): string | null {
-  // Regular expression to match metadata in the format: key: value
-  const regex = new RegExp(`${key}:\\s*(.+)`, "i");
-  const match = content.match(regex);
+function extractFrontmatter(content: string): Record<string, any> | null {
+  // Extract the frontmatter section between --- markers
+  const frontmatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
+  if (!frontmatterMatch) return null;
 
-  return match ? match[1].trim() : null;
+  const frontmatterText = frontmatterMatch[1];
+
+  try {
+    // Parse the frontmatter text using YAML library
+    const frontmatter = YAML.parse(frontmatterText);
+
+    // Convert empty strings to null for consistency
+    for (const key in frontmatter) {
+      if (frontmatter[key] === "") {
+        frontmatter[key] = null;
+      }
+    }
+
+    return frontmatter;
+  } catch (error) {
+    console.error("Error parsing frontmatter YAML:", error);
+    return null;
+  }
 }
 
 /**
@@ -201,35 +218,6 @@ export async function getSysData(
     );
     return null;
   }
-}
-
-/**
- * Extracts frontmatter from README content
- * @param content The README content
- * @returns The extracted frontmatter object or null if not found
- */
-function extractFrontmatter(content: string): Record<string, any> | null {
-  // Extract the frontmatter section between --- markers
-  const frontmatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
-  if (!frontmatterMatch) return null;
-
-  const frontmatter: Record<string, any> = {};
-  const frontmatterText = frontmatterMatch[1];
-
-  // Process each line to extract key-value pairs
-  const lines = frontmatterText.split("\n");
-  for (const line of lines) {
-    const keyValueMatch = line.match(/^([^:]+):\s*(.*)$/);
-    if (keyValueMatch) {
-      const key = keyValueMatch[1].trim();
-      const value = keyValueMatch[2].trim();
-
-      // Handle special values
-      frontmatter[key] = value === "null" || value === "" ? null : value;
-    }
-  }
-
-  return frontmatter;
 }
 
 /**
