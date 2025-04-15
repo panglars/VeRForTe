@@ -17,7 +17,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import { useTranslations } from "@/i18n/utils";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import type { BoardMetaData, SysMetaData } from "@/lib/data";
@@ -88,11 +87,7 @@ const StatusCell = React.memo(
       </span>
     );
 
-    const canLink =
-      systemInfo?.lastUpdate != null &&
-      systemInfo.sysDir &&
-      systemInfo.fileName;
-
+    const canLink = systemInfo?.lastUpdate != null;
     if (canLink) {
       return (
         <a
@@ -103,7 +98,7 @@ const StatusCell = React.memo(
               normalizeLocale: false,
             },
           )}
-          className="no-underline"
+          className="no-underline hover:opacity-0 transition-opacity"
           title={`${t("sys.update")}: ${systemInfo.lastUpdate}`}
         >
           {statusElement}
@@ -114,7 +109,7 @@ const StatusCell = React.memo(
     }
   },
 );
-// Add display name for better debugging
+
 StatusCell.displayName = "StatusCell";
 
 function useTableConfig({
