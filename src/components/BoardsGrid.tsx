@@ -52,7 +52,7 @@ const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
       label: t("sort.ruyi"),
       field: "vendor",
       direction: "asc",
-      // Custom sort function for Ruyisdk Support
+      // Custom sort function for RuyiSDK Support
       sortFn: (a, b) => {
         // Check if vendor exists
         const hasVendorA = a.vendor && a.vendor.trim() !== "";
