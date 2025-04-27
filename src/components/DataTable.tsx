@@ -98,7 +98,7 @@ const StatusCell = React.memo(
               normalizeLocale: false,
             },
           )}
-          className="no-underline hover:opacity-0 transition-opacity"
+          className="no-underline hover:opacity-80 transition-opacity"
           title={`${t("sys.update")}: ${systemInfo.lastUpdate}`}
         >
           {statusElement}
