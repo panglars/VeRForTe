@@ -236,7 +236,7 @@ export default function DataTable({
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const stickyHeaderClass = "sticky top-0 z-30 bg-background";
+  const stickyHeaderClass = "sticky top-0 z-30 bg-muted";
   const stickyCellShadow =
     "shadow-[4px_0_6px_-2px_rgba(0,0,0,0.1)] dark:shadow-[4px_0_6px_-2px_rgba(0,0,0,0.4)]";
 
@@ -253,7 +253,7 @@ export default function DataTable({
                   className={clsx(
                     "whitespace-nowrap",
                     header.id === "board" &&
-                      `sticky left-0 z-20 bg-background ${stickyCellShadow}`,
+                      `sticky left-0 z-20 bg-muted ${stickyCellShadow}`,
                     header.column.getCanSort() && "cursor-pointer select-none",
                   )}
                   onClick={header.column.getToggleSortingHandler()}
@@ -288,8 +288,8 @@ export default function DataTable({
                     style={{ width: cell.column.getSize() }}
                     className={clsx(
                       cell.column.id === "board" &&
-                        `font-medium sticky left-0 z-10 bg-background group-hover:bg-muted/90 ${stickyCellShadow}`,
-                      cell.column.id !== "board" && "group-hover:bg-muted/80",
+                        `font-medium sticky left-0 z-10 bg-muted ${stickyCellShadow}`,
+                      cell.column.id !== "board",
                       "whitespace-nowrap",
                     )}
                   >
