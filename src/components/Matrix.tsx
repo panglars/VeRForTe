@@ -63,7 +63,8 @@ export default function Matrix({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const t = useTranslations(lang);
+  const safetyLang = (lang as any) as "en" | "zh_CN";
+  const t = useTranslations(safetyLang);
 
   useEffect(() => {
     let isMounted = true;
