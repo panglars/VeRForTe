@@ -28,6 +28,7 @@ interface CategoryDataItem {
   categoryName: string;
   systemList: SystemEntry[];
   statusMatrix: (string | null)[][];
+  supportedBoardIndices: number[];
 }
 interface MatrixProps {
   lang: string;
@@ -62,8 +63,9 @@ export default function Matrix({
   const [metadataText, setMetadataText] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string>("");
 
-  const safetyLang = (lang as any) as "en" | "zh_CN";
+  const safetyLang = lang as any as "en" | "zh_CN";
   const t = useTranslations(safetyLang);
 
   useEffect(() => {
@@ -170,11 +172,22 @@ export default function Matrix({
             });
           });
 
+          const supportedBoardIndices: number[] = [];
+          statusMatrix.forEach((boardStatuses, boardIdx) => {
+            const hasSupport = boardStatuses.some(
+              (status) => status !== null && status !== "",
+            );
+            if (hasSupport) {
+              supportedBoardIndices.push(boardIdx);
+            }
+          });
+
           return {
             categoryId,
             categoryName: t(categoryId) || categoryId,
             systemList,
             statusMatrix,
+            supportedBoardIndices,
           };
         },
       );
@@ -184,11 +197,17 @@ export default function Matrix({
       console.error("Error parsing metadata YAML:", parseError);
       return [];
     }
-  }, [metadataText, boardsData, sysData, t, error]); // Include error state
+  }, [metadataText, boardsData, sysData, t, error]);
 
   const defaultTab = useMemo(() => {
     return categoryData.length > 0 ? categoryData[0].categoryId : "";
   }, [categoryData]);
+
+  useEffect(() => {
+    if (defaultTab && !activeCategory) {
+      setActiveCategory(defaultTab);
+    }
+  }, [defaultTab, activeCategory]);
 
   if (isLoading) {
     return (
@@ -204,9 +223,18 @@ export default function Matrix({
     );
   }
 
+  const getActiveCategoryData = () => {
+    return categoryData.find((cat) => cat.categoryId === activeCategory);
+  };
+
   return (
     <div className="w-full py-4 px-4">
-      <Tabs defaultValue={defaultTab} className="w-full">
+      <Tabs
+        defaultValue={defaultTab}
+        className="w-full"
+        onValueChange={(value) => setActiveCategory(value)}
+        value={activeCategory}
+      >
         <div className="flex justify-center mb-4 overflow-x-auto pb-2">
           <TabsList className="h-10 flex-shrink-0">
             {categoryData.map(({ categoryId, categoryName }) => (
@@ -221,21 +249,25 @@ export default function Matrix({
           </TabsList>
         </div>
 
-        {categoryData.map(({ categoryId, systemList, statusMatrix }) => (
-          <TabsContent
-            key={categoryId}
-            value={categoryId}
-            className="mt-6 focus-visible:ring-0 focus-visible:ring-offset-0"
-          >
-            <DataTable
-              lang={lang}
-              boards={boardsData}
-              systems={sysData}
-              systemList={systemList}
-              statusMatrix={statusMatrix}
-            />
-          </TabsContent>
-        ))}
+        {categoryData.map(
+          ({ categoryId, systemList, statusMatrix, supportedBoardIndices }) => (
+            <TabsContent
+              key={categoryId}
+              value={categoryId}
+              className="mt-6 focus-visible:ring-0 focus-visible:ring-offset-0"
+            >
+              <DataTable
+                lang={lang}
+                boards={boardsData}
+                systems={sysData}
+                systemList={systemList}
+                statusMatrix={statusMatrix}
+                categoryId={categoryId}
+                supportedBoardIndices={supportedBoardIndices}
+              />
+            </TabsContent>
+          ),
+        )}
       </Tabs>
     </div>
   );

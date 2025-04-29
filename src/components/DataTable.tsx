@@ -41,6 +41,8 @@ interface DataTableProps {
   systems: SysMetaData[];
   systemList: SystemEntry[];
   statusMatrix: (string | null)[][];
+  categoryId?: string;
+  supportedBoardIndices?: number[];
 }
 
 type TranslateFunction = (key: keyof (typeof ui)[typeof defaultLang]) => string;
@@ -158,47 +160,54 @@ function useTableConfig({
     }
 
     const boardDifferenceMap = new Map<string, boolean>();
-    
-    boards.forEach(board => {
-      const boardIdx = boards.findIndex(b => b.dir === board.dir);
+
+    boards.forEach((board) => {
+      const boardIdx = boards.findIndex((b) => b.dir === board.dir);
       if (boardIdx === -1) return;
-      
+
       const boardStatuses = statusMatrix[boardIdx] || [];
-      
+
       const selectedSystemIndices = systemList
-        .filter(sys => selectedSystems.includes(sys.id))
-        .map(sys => systemList.findIndex(s => s.id === sys.id))
-        .filter(idx => idx !== -1);
-      
+        .filter((sys) => selectedSystems.includes(sys.id))
+        .map((sys) => systemList.findIndex((s) => s.id === sys.id))
+        .filter((idx) => idx !== -1);
+
       if (selectedSystemIndices.length <= 1) {
         boardDifferenceMap.set(board.dir, true);
         return;
       }
-      
-      const statuses = selectedSystemIndices.map(sysIdx => 
-        boardStatuses[sysIdx] || null
+
+      const statuses = selectedSystemIndices.map(
+        (sysIdx) => boardStatuses[sysIdx] || null,
       );
-      
-      const hasAnySupport = statuses.some(s => s !== null && s !== "");
-      
+
+      const hasAnySupport = statuses.some((s) => s !== null && s !== "");
+
       if (!hasAnySupport) {
         boardDifferenceMap.set(board.dir, false);
         return;
       }
-      
-      const validStatuses = statuses.filter(s => s !== null && s !== "");
-      
+
+      const validStatuses = statuses.filter((s) => s !== null && s !== "");
+
       if (validStatuses.length < statuses.length) {
         boardDifferenceMap.set(board.dir, true);
         return;
       }
-      
-      const allSame = validStatuses.every(s => s === validStatuses[0]);
+
+      const allSame = validStatuses.every((s) => s === validStatuses[0]);
       boardDifferenceMap.set(board.dir, !allSame);
     });
 
     return (boardDir: string) => boardDifferenceMap.get(boardDir) ?? true;
-  }, [compareMode, hideIdentical, selectedSystems, boards, statusMatrix, systemList]);
+  }, [
+    compareMode,
+    hideIdentical,
+    selectedSystems,
+    boards,
+    statusMatrix,
+    systemList,
+  ]);
 
   const augmentedData = useMemo(() => {
     const data: AugmentedRowData[] = [];
@@ -210,7 +219,7 @@ function useTableConfig({
       ) {
         return;
       }
-      
+
       if (compareMode && hideIdentical && !getBoardHasDifference(board.dir)) {
         return;
       }
@@ -313,12 +322,16 @@ const SelectionPanel = ({
   setSelectedItems,
   title,
   t,
+  description,
+  stats,
 }: {
   items: { id: string; name: string }[];
   selectedItems: string[];
   setSelectedItems: (items: string[]) => void;
   title: string;
   t: TranslateFunction;
+  description?: string;
+  stats?: { count: number; total: number };
 }) => {
   const handleToggle = (id: string) => {
     setSelectedItems(
@@ -381,6 +394,16 @@ const SelectionPanel = ({
           ))}
         </div>
       </ScrollArea>
+      {description && (
+        <p className="text-xs text-muted-foreground">{description}</p>
+      )}
+      {stats && (
+        <p className="text-xs text-muted-foreground">
+          {t("compare.filtered_boards")
+            .replace("{count}", stats.count.toString())
+            .replace("{total}", stats.total.toString())}
+        </p>
+      )}
     </div>
   );
 };
@@ -391,6 +414,8 @@ export default function DataTable({
   systems,
   systemList,
   statusMatrix,
+  categoryId,
+  supportedBoardIndices,
 }: DataTableProps) {
   const safetyLang = lang as any as "en" | "zh_CN";
   const t = useTranslations(safetyLang);
@@ -409,11 +434,21 @@ export default function DataTable({
   const [tempHideIdentical, setTempHideIdentical] = useState(false);
 
   const boardOptions = useMemo(() => {
+    if (supportedBoardIndices && supportedBoardIndices.length > 0) {
+      return supportedBoardIndices
+        .map((index) => boards[index])
+        .filter(Boolean)
+        .map((board) => ({
+          id: board.dir,
+          name: board.product,
+        }));
+    }
+
     return boards.map((board) => ({
       id: board.dir,
       name: board.product,
     }));
-  }, [boards]);
+  }, [boards, supportedBoardIndices]);
 
   const handleCompareToggle = () => {
     if (!compareMode) {
@@ -462,9 +497,10 @@ export default function DataTable({
   const stickyCellShadow =
     "shadow-[4px_0_6px_-2px_rgba(0,0,0,0.1)] dark:shadow-[4px_0_6px_-2px_rgba(0,0,0,0.4)]";
 
-  const hideIdenticalTipKey = selectedSystems.length <= 1 
-    ? "compare.hide_identical_no_systems" 
-    : "compare.hide_identical_tip";
+  const hideIdenticalTipKey =
+    selectedSystems.length <= 1
+      ? "compare.hide_identical_no_systems"
+      : "compare.hide_identical_tip";
 
   return (
     <div className="w-full mb-12">
@@ -499,6 +535,19 @@ export default function DataTable({
                 setSelectedItems={setTempSelectedBoards}
                 title={t("compare.select_boards")}
                 t={t}
+                description={
+                  supportedBoardIndices && supportedBoardIndices.length > 0
+                    ? t("compare.supported_boards_only")
+                    : undefined
+                }
+                stats={
+                  supportedBoardIndices && supportedBoardIndices.length > 0
+                    ? {
+                        count: supportedBoardIndices.length,
+                        total: boards.length,
+                      }
+                    : undefined
+                }
               />
 
               <SelectionPanel
@@ -514,7 +563,7 @@ export default function DataTable({
               <Checkbox
                 id="hide-identical"
                 checked={tempHideIdentical}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   setTempHideIdentical(checked as boolean)
                 }
                 className="data-[state=checked]:bg-primary"
