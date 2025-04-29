@@ -1,6 +1,6 @@
-// BoardsGrid.tsx
 import React, { useState, useEffect } from "react";
 import SortDropdown from "./SortDropdown";
+import type { SortOption } from "./SortDropdown";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import {
   Card,
@@ -14,18 +14,11 @@ import { Search as SearchIcon } from "lucide-react";
 import { ui } from "@/i18n/ui";
 import { useTranslations } from "@/i18n/utils";
 
-interface BoardMetaData {
-  product: string;
-  cpu: string;
-  cpu_core: string;
-  ram: string;
-  vendor: string;
-  dir: string;
-  [key: string]: string;
-}
+import type { BoardMetaData, SysMetaData } from "@/lib/data";
 
 interface Props {
   boards: BoardMetaData[];
+  sysData?: SysMetaData[];
   lang: keyof typeof ui;
 }
 
@@ -33,26 +26,47 @@ interface Props {
 type SortField = "vendor" | "product";
 type SortDirection = "asc" | "desc";
 
-interface SortOption {
-  id: string;
-  label: string;
+interface BoardSortOption extends SortOption {
   field: SortField;
-  direction: SortDirection;
   sortFn?: (a: BoardMetaData, b: BoardMetaData) => number;
 }
 
-const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
+const BoardsGrid: React.FC<Props> = ({
+  boards: initialBoards,
+  sysData = [],
+  lang,
+}) => {
   // Get translation function directly in the component
   const t = useTranslations(lang);
 
-  // Define sort options with custom sort functions
-  const sortOptions: SortOption[] = [
+  const [boardToSystems, setBoardToSystems] = useState<
+    Record<string, string[]>
+  >({});
+
+  useEffect(() => {
+    if (sysData && sysData.length > 0) {
+      const mapping: Record<string, string[]> = {};
+
+      sysData.forEach((system) => {
+        if (!mapping[system.boardDir]) {
+          mapping[system.boardDir] = [];
+        }
+
+        if (system.sys && !mapping[system.boardDir].includes(system.sys)) {
+          mapping[system.boardDir].push(system.sys);
+        }
+      });
+
+      setBoardToSystems(mapping);
+    }
+  }, [sysData]);
+
+  const sortOptions: BoardSortOption[] = [
     {
       id: "vendor-asc",
       label: t("sort.ruyi"),
       field: "vendor",
       direction: "asc",
-      // Custom sort function for RuyiSDK Support
       sortFn: (a, b) => {
         // Check if vendor exists
         const hasVendorA = a.vendor && a.vendor.trim() !== "";
@@ -85,7 +99,9 @@ const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
 
   // State for search and sort
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [currentSort, setCurrentSort] = useState<SortOption>(sortOptions[0]);
+  const [currentSort, setCurrentSort] = useState<BoardSortOption>(
+    sortOptions[0],
+  );
   const [visibleBoards, setVisibleBoards] = useState<BoardMetaData[]>([]);
   const [hasResults, setHasResults] = useState<boolean>(true);
 
@@ -95,7 +111,7 @@ const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
   }, [initialBoards]);
 
   // Function to sort boards
-  const sortBoards = (boards: BoardMetaData[], sortOption: SortOption) => {
+  const sortBoards = (boards: BoardMetaData[], sortOption: BoardSortOption) => {
     if (!boards.length) {
       setVisibleBoards([]);
       setHasResults(false);
@@ -142,7 +158,10 @@ const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
       const cpu = board.cpu.toLowerCase();
       const cpuCore = board.cpu_core.toLowerCase();
 
-      return [product, cpu, cpuCore].some((attr) =>
+      const supportedSystems = boardToSystems[board.dir] || [];
+      const systemsStr = supportedSystems.join(" ").toLowerCase();
+
+      return [product, cpu, cpuCore, systemsStr].some((attr) =>
         attr.includes(normalizedQuery),
       );
     });
@@ -153,7 +172,7 @@ const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
 
   // Handle sort change
   const handleSortChange = (sortOption: SortOption) => {
-    setCurrentSort(sortOption);
+    setCurrentSort(sortOption as BoardSortOption);
 
     // Apply new sort to current visible boards based on current search
     const boardsToSort = searchQuery.trim()
@@ -163,13 +182,16 @@ const BoardsGrid: React.FC<Props> = ({ boards: initialBoards, lang }) => {
           const cpu = board.cpu.toLowerCase();
           const cpuCore = board.cpu_core.toLowerCase();
 
-          return [product, cpu, cpuCore].some((attr) =>
+          const supportedSystems = boardToSystems[board.dir] || [];
+          const systemsStr = supportedSystems.join(" ").toLowerCase();
+
+          return [product, cpu, cpuCore, systemsStr].some((attr) =>
             attr.includes(normalizedQuery),
           );
         })
       : initialBoards;
 
-    sortBoards(boardsToSort, sortOption);
+    sortBoards(boardsToSort, sortOption as BoardSortOption);
   };
 
   return (

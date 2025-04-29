@@ -223,10 +223,6 @@ export default function Matrix({
     );
   }
 
-  const getActiveCategoryData = () => {
-    return categoryData.find((cat) => cat.categoryId === activeCategory);
-  };
-
   return (
     <div className="w-full py-4 px-4">
       <Tabs

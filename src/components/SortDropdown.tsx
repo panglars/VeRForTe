@@ -8,7 +8,7 @@ import {
 import { Button } from "./ui/button";
 import { ArrowDownWideNarrow, ChevronDown } from "lucide-react";
 
-interface SortOption {
+export interface SortOption {
   id: string;
   label: string;
   field: string;

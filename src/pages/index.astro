@@ -1,18 +1,19 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import { getAllBoardsData } from "@/lib/data";
+import { getAllBoardsData, getAllSysData } from "@/lib/data";
 import BoardsGrid from "@/components/BoardsGrid";
 import { siteConfig } from "@/config/site";
 import { getLangFromUrl } from "@/i18n/utils";
 
 // Get all board data
 const boardsData = await getAllBoardsData();
+const sysData = await getAllSysData();
 const lang = getLangFromUrl(Astro.url);
 ---
 
 <Layout title={siteConfig.title}>
   <h1 class="justify-center text-4xl flex my-8">{siteConfig.title}</h1>
   <div class="max-w-5xl mx-auto">
-    <BoardsGrid client:load boards={boardsData} lang={lang} />
+    <BoardsGrid client:load boards={boardsData} sysData={sysData} lang={lang} />
   </div>
 </Layout>
