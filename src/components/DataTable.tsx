@@ -32,12 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import {
-  Check,
-  ChevronsUpDown,
-  FilterX,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Check, FilterX, SlidersHorizontal, EyeOff } from "lucide-react";
 import { defaultLang, ui } from "@/i18n/ui";
 
 interface DataTableProps {
@@ -48,7 +43,6 @@ interface DataTableProps {
   statusMatrix: (string | null)[][];
 }
 
-// 翻译函数类型
 type TranslateFunction = (key: keyof (typeof ui)[typeof defaultLang]) => string;
 
 interface StatusSystemInfo {
@@ -143,10 +137,12 @@ function useTableConfig({
   compareMode,
   selectedBoards,
   selectedSystems,
+  hideIdentical,
 }: DataTableProps & {
   compareMode: boolean;
   selectedBoards: string[];
   selectedSystems: string[];
+  hideIdentical: boolean;
 }) {
   const systemsLookup = useMemo(() => {
     const map = new Map<string, SysMetaData>();
@@ -156,13 +152,57 @@ function useTableConfig({
     return map;
   }, [systems]);
 
+  const getBoardHasDifference = useMemo(() => {
+    if (!compareMode || !hideIdentical || selectedSystems.length <= 1) {
+      return (boardDir: string) => true;
+    }
+
+    const boardDifferenceMap = new Map<string, boolean>();
+    
+    boards.forEach(board => {
+      const boardIdx = boards.findIndex(b => b.dir === board.dir);
+      if (boardIdx === -1) return;
+      
+      const boardStatuses = statusMatrix[boardIdx] || [];
+      
+      const selectedSystemIndices = systemList
+        .filter(sys => selectedSystems.includes(sys.id))
+        .map(sys => systemList.findIndex(s => s.id === sys.id))
+        .filter(idx => idx !== -1);
+      
+      if (selectedSystemIndices.length <= 1) {
+        boardDifferenceMap.set(board.dir, true);
+        return;
+      }
+      
+      const statuses = selectedSystemIndices.map(sysIdx => 
+        boardStatuses[sysIdx] || null
+      );
+      
+      const hasAnySupport = statuses.some(s => s !== null && s !== "");
+      
+      if (!hasAnySupport) {
+        boardDifferenceMap.set(board.dir, false);
+        return;
+      }
+      
+      const validStatuses = statuses.filter(s => s !== null && s !== "");
+      
+      if (validStatuses.length < statuses.length) {
+        boardDifferenceMap.set(board.dir, true);
+        return;
+      }
+      
+      const allSame = validStatuses.every(s => s === validStatuses[0]);
+      boardDifferenceMap.set(board.dir, !allSame);
+    });
+
+    return (boardDir: string) => boardDifferenceMap.get(boardDir) ?? true;
+  }, [compareMode, hideIdentical, selectedSystems, boards, statusMatrix, systemList]);
+
   const augmentedData = useMemo(() => {
     const data: AugmentedRowData[] = [];
     boards.forEach((board, rowIndex) => {
-      const boardStatuses = statusMatrix[rowIndex] || [];
-      const statusesMap: Record<string, StatusEntry> = {};
-      let hasNonNullStatus = false;
-
       if (
         compareMode &&
         selectedBoards.length > 0 &&
@@ -170,6 +210,14 @@ function useTableConfig({
       ) {
         return;
       }
+      
+      if (compareMode && hideIdentical && !getBoardHasDifference(board.dir)) {
+        return;
+      }
+
+      const boardStatuses = statusMatrix[rowIndex] || [];
+      const statusesMap: Record<string, StatusEntry> = {};
+      let hasNonNullStatus = false;
 
       systemList.forEach((system, colIndex) => {
         const status = boardStatuses[colIndex] ?? null;
@@ -204,6 +252,8 @@ function useTableConfig({
     systemsLookup,
     compareMode,
     selectedBoards,
+    hideIdentical,
+    getBoardHasDifference,
   ]);
 
   const columns = useMemo(() => {
@@ -355,6 +405,8 @@ export default function DataTable({
   const [tempSelectedBoards, setTempSelectedBoards] = useState<string[]>([]);
   const [tempSelectedSystems, setTempSelectedSystems] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [hideIdentical, setHideIdentical] = useState(false);
+  const [tempHideIdentical, setTempHideIdentical] = useState(false);
 
   const boardOptions = useMemo(() => {
     return boards.map((board) => ({
@@ -368,16 +420,19 @@ export default function DataTable({
       setDialogOpen(true);
       setTempSelectedBoards(selectedBoards);
       setTempSelectedSystems(selectedSystems);
+      setTempHideIdentical(hideIdentical);
     } else {
       setCompareMode(false);
       setSelectedBoards([]);
       setSelectedSystems([]);
+      setHideIdentical(false);
     }
   };
 
   const handleApplyCompare = () => {
     setSelectedBoards(tempSelectedBoards);
     setSelectedSystems(tempSelectedSystems);
+    setHideIdentical(tempHideIdentical);
     setCompareMode(true);
     setDialogOpen(false);
   };
@@ -391,6 +446,7 @@ export default function DataTable({
     compareMode,
     selectedBoards,
     selectedSystems,
+    hideIdentical,
   });
 
   const table = useReactTable({
@@ -405,6 +461,10 @@ export default function DataTable({
   const stickyHeaderClass = "sticky top-0 z-30 bg-muted";
   const stickyCellShadow =
     "shadow-[4px_0_6px_-2px_rgba(0,0,0,0.1)] dark:shadow-[4px_0_6px_-2px_rgba(0,0,0,0.4)]";
+
+  const hideIdenticalTipKey = selectedSystems.length <= 1 
+    ? "compare.hide_identical_no_systems" 
+    : "compare.hide_identical_tip";
 
   return (
     <div className="w-full mb-12">
@@ -450,12 +510,36 @@ export default function DataTable({
               />
             </div>
 
+            <div className="flex items-center space-x-2 mt-6 bg-muted/30 p-3 rounded-md">
+              <Checkbox
+                id="hide-identical"
+                checked={tempHideIdentical}
+                onCheckedChange={(checked) => 
+                  setTempHideIdentical(checked as boolean)
+                }
+                className="data-[state=checked]:bg-primary"
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="hide-identical"
+                  className="text-sm font-medium leading-none flex items-center gap-2 cursor-pointer"
+                >
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  {t("compare.hide_identical")}
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  {t(hideIdenticalTipKey)}
+                </p>
+              </div>
+            </div>
+
             <DialogFooter className="gap-2 flex-wrap">
               <Button
                 variant="outline"
                 onClick={() => {
                   setTempSelectedBoards([]);
                   setTempSelectedSystems([]);
+                  setTempHideIdentical(false);
                 }}
                 className="flex items-center gap-2"
                 size="sm"
@@ -522,6 +606,14 @@ export default function DataTable({
               </span>
             )}
           </div>
+          {hideIdentical && (
+            <div className="md:ml-auto flex items-center">
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <EyeOff className="h-3 w-3" />
+                {t("compare.hide_identical")}
+              </Badge>
+            </div>
+          )}
         </div>
       )}
 

@@ -47,6 +47,9 @@ export const ui = {
     "compare.no_selection": "No selection",
     "compare.select_all": "Select All",
     "compare.deselect_all": "Deselect All",
+    "compare.hide_identical": "Hide identical and unsupported boards",
+    "compare.hide_identical_tip": "Only show boards with support differences between systems",
+    "compare.hide_identical_no_systems": "Select at least two systems to use this feature",
   },
   zh_CN: {
     "nav.board": "开发板总览",
@@ -89,5 +92,8 @@ export const ui = {
     "compare.no_selection": "未选择",
     "compare.select_all": "全选",
     "compare.deselect_all": "取消全选",
+    "compare.hide_identical": "隐藏相同内容和无支持开发板",
+    "compare.hide_identical_tip": "仅显示在系统间支持状态有差异的开发板",
+    "compare.hide_identical_no_systems": "请至少选择两个系统来使用此功能",
   },
 } as const;
