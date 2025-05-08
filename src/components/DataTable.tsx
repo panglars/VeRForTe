@@ -83,7 +83,7 @@ const StatusCell = React.memo(
     status: string | null;
     lang: string;
     boardDir: string;
-    systemInfo: StatusSystemInfo | undefined;
+    systemInfo: StatusSystemInfo | null | undefined;
   }) => {
     const safetyLang = lang as any as "en" | "zh_CN";
     const t = useTranslations(safetyLang);
@@ -105,7 +105,8 @@ const StatusCell = React.memo(
       </span>
     );
 
-    const canLink = systemInfo?.lastUpdate != null;
+    const canLink =
+      systemInfo?.lastUpdate != null || systemInfo?.lastUpdate != undefined;
     if (canLink) {
       return (
         <a
