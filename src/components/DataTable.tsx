@@ -32,8 +32,13 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Check, FilterX, SlidersHorizontal, EyeOff } from "lucide-react";
+import { Check, FilterX, SlidersHorizontal, EyeOff, Info } from "lucide-react";
 import { defaultLang, ui } from "@/i18n/ui";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface DataTableProps {
   lang: string;
@@ -69,8 +74,7 @@ const statusClassMap: Record<string, string> = {
   CFH: "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100",
   CFT: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100",
   WIP: "bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-800 dark:text-fuchsia-100",
-  UNKNOWN:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100",
+  CFI: "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100",
 };
 
 const StatusCell = React.memo(
@@ -107,6 +111,7 @@ const StatusCell = React.memo(
 
     const canLink =
       systemInfo?.lastUpdate != null || systemInfo?.lastUpdate != undefined;
+
     if (canLink) {
       return (
         <a
@@ -434,6 +439,16 @@ export default function DataTable({
   const [hideIdentical, setHideIdentical] = useState(false);
   const [tempHideIdentical, setTempHideIdentical] = useState(false);
 
+  const statusDescriptions = [
+    { status: "GOOD", description: t("status.good") },
+    { status: "BASIC", description: t("status.basic") },
+    { status: "CFH", description: t("status.cfh") },
+    { status: "CFT", description: t("status.cft") },
+    { status: "CFI", description: t("status.cfi") },
+    { status: "WIP", description: t("status.wip") },
+    { status: "-", description: t("status.unknown") },
+  ];
+
   const boardOptions = useMemo(() => {
     if (supportedBoardIndices && supportedBoardIndices.length > 0) {
       return supportedBoardIndices
@@ -506,6 +521,41 @@ export default function DataTable({
   return (
     <div className="w-full mb-12">
       <div className="flex justify-end mb-4 gap-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Info className="h-4 w-4" />
+              {t("status_legend")}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80">
+            <div className="space-y-2">
+              <h4 className="font-medium leading-none mb-4">
+                {t("status_legend")}
+              </h4>
+              {statusDescriptions.map((item) => (
+                <div key={item.status} className="flex items-start gap-2">
+                  <span
+                    className={clsx(
+                      "inline-block px-2 py-1 rounded-md font-medium text-xs whitespace-nowrap",
+                      statusClassMap[item.status] ?? statusClassMap.UNKNOWN,
+                    )}
+                  >
+                    {item.status}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    {item.description}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <Button
           onClick={handleCompareToggle}
           variant={compareMode ? "destructive" : "outline"}

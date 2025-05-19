@@ -35,6 +35,19 @@ export const ui = {
     rtos: "RTOS / Real-Time Operating Systems",
     others: "Other Systems",
     loading: "Loading...",
+    status_legend: "Status Legend",
+    "status.good": "Supports GUI",
+    "status.basic": "Can boot up and run",
+    "status.cfh":
+      "(Call for help): Official documentations/community forums show this OS is supported on this board, but failed to boot up",
+    "status.cft":
+      "(Call for testing): An OS image is avaliable, need further verification on real hardware",
+    "status.cfi":
+      "(Call for more information): Official documentations claims there is support for this OS, but no OS image avaliable yet",
+    "status.wip":
+      "Official announcements say there will be/is support for this OS/board, but no image or other resources (e.g. source code) avaliable yet",
+    "status.unknown":
+      "No support for this OS/board combo, either from official or other sources",
     "compare.title": "Compare Mode",
     "compare.enable": "Enable Compare",
     "compare.disable": "Disable Compare",
@@ -85,6 +98,17 @@ export const ui = {
     rtos: "RTOS/实时操作系统",
     others: "其他系统",
     loading: "加载中...",
+    status_legend: "状态说明",
+    "status.good": "支持图形界面",
+    "status.basic": "能启动和运行",
+    "status.cfh":
+      "(Call for help)：官方文档/社区论坛显示该操作系统支持此开发板，但启动失败",
+    "status.cft":
+      "(Call for testing)：有可用的操作系统镜像，但是缺乏硬件设备验证",
+    "status.cfi":
+      " (Call for more information)：官方文档声称支持该操作系统，但目前没有可用的系统镜像",
+    "status.wip": "官方公告表示将会有/正在支持该开发板，目前没有镜像可用",
+    "status.unknown": "该操作系统/开发板组合没有支持，无论是官方还是其他来源",
     "compare.title": "比较模式",
     "compare.enable": "启用比较",
     "compare.disable": "关闭比较",
