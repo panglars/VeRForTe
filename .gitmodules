@@ -1,3 +1,6 @@
 [submodule "support-matrix"]
 	path = support-matrix
 	url = https://github.com/ruyisdk/support-matrix.git
+[submodule "packages-index"]
+	path = packages-index
+	url = https://github.com/ruyisdk/packages-index.git
