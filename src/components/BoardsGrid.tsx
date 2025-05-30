@@ -13,6 +13,7 @@ import { Input } from "./ui/input";
 import { Search as SearchIcon } from "lucide-react";
 import { ui } from "@/i18n/ui";
 import { useTranslations } from "@/i18n/utils";
+import { getRuyiDeviceVendor } from "@/lib/data";
 
 import type { BoardMetaData, SysMetaData } from "@/lib/data";
 
@@ -42,6 +43,7 @@ const BoardsGrid: React.FC<Props> = ({
   const [boardToSystems, setBoardToSystems] = useState<
     Record<string, string[]>
   >({});
+  const [deviceNames, setDeviceNames] = useState<string[]>([]);
 
   useEffect(() => {
     if (sysData && sysData.length > 0) {
@@ -61,6 +63,11 @@ const BoardsGrid: React.FC<Props> = ({
     }
   }, [sysData]);
 
+  useEffect(() => {
+    // Load device names
+    getRuyiDeviceVendor().then(setDeviceNames);
+  }, []);
+
   const sortOptions: BoardSortOption[] = [
     {
       id: "vendor-asc",
@@ -68,17 +75,19 @@ const BoardsGrid: React.FC<Props> = ({
       field: "vendor",
       direction: "asc",
       sortFn: (a, b) => {
-        // Check if vendor exists
-        const hasVendorA = a.vendor && a.vendor.trim() !== "";
-        const hasVendorB = b.vendor && b.vendor.trim() !== "";
+        const vendorA = a.vendor?.toLowerCase() || "";
+        const vendorB = b.vendor?.toLowerCase() || "";
 
-        // If both have or both don't have vendor, sort by product alphabetically
-        if (hasVendorA === hasVendorB) {
+        const isDeviceA = deviceNames.includes(vendorA);
+        const isDeviceB = deviceNames.includes(vendorB);
+
+        // If both are devices or both are not devices, sort by product
+        if (isDeviceA === isDeviceB) {
           return a.product.localeCompare(b.product);
         }
 
-        // If only one has vendor, it comes first
-        return hasVendorA ? -1 : 1;
+        // If only one is a device, it comes first
+        return isDeviceA ? -1 : 1;
       },
     },
     {
@@ -108,7 +117,7 @@ const BoardsGrid: React.FC<Props> = ({
   // Apply initial sort on component mount
   useEffect(() => {
     sortBoards(initialBoards, currentSort);
-  }, [initialBoards]);
+  }, [initialBoards, deviceNames]);
 
   // Function to sort boards
   const sortBoards = (boards: BoardMetaData[], sortOption: BoardSortOption) => {
@@ -247,7 +256,9 @@ const BoardsGrid: React.FC<Props> = ({
                   <CardHeader>
                     <CardTitle className="flex justify-between text-lg font-semibold">
                       <div>{board.product}</div>
-                      {board.vendor && (
+                      {deviceNames.includes(
+                        board.vendor?.toLowerCase() || "",
+                      ) && (
                         <img
                           src="/favicon.svg"
                           alt="Ruyi"
