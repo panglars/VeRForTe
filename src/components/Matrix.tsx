@@ -149,6 +149,11 @@ export default function Matrix({
         delete categories.customized;
       }
 
+      // HACK: only delete 'arches' categories, not used
+      if (categories.arches) {
+        delete categories.arches;
+      }
+
       const processedData = Object.entries(categories).map(
         ([categoryId, systemList]) => {
           const systemsByBoardDir = new Map<string, SysMetaData[]>();

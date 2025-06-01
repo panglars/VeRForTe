@@ -45,6 +45,14 @@ const BoardsGrid: React.FC<Props> = ({
   >({});
   const [deviceNames, setDeviceNames] = useState<string[]>([]);
 
+  // BUG: initial sort not work
+  useEffect(() => {
+    getRuyiDeviceVendor().then((names) => {
+      setDeviceNames(names);
+      sortBoards(initialBoards, sortOptions[0]);
+    });
+  }, []);
+
   useEffect(() => {
     if (sysData && sysData.length > 0) {
       const mapping: Record<string, string[]> = {};
@@ -62,11 +70,6 @@ const BoardsGrid: React.FC<Props> = ({
       setBoardToSystems(mapping);
     }
   }, [sysData]);
-
-  useEffect(() => {
-    // Load device names
-    getRuyiDeviceVendor().then(setDeviceNames);
-  }, []);
 
   const sortOptions: BoardSortOption[] = [
     {
@@ -113,11 +116,6 @@ const BoardsGrid: React.FC<Props> = ({
   );
   const [visibleBoards, setVisibleBoards] = useState<BoardMetaData[]>([]);
   const [hasResults, setHasResults] = useState<boolean>(true);
-
-  // Apply initial sort on component mount
-  useEffect(() => {
-    sortBoards(initialBoards, currentSort);
-  }, [initialBoards, deviceNames]);
 
   // Function to sort boards
   const sortBoards = (boards: BoardMetaData[], sortOption: BoardSortOption) => {
