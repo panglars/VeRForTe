@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import SortDropdown from "./SortDropdown";
-import type { SortOption } from "./SortDropdown";
+import SortDropdown from "../SortDropdown";
+import type { SortOption } from "../SortDropdown";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import {
   Card,
@@ -8,12 +8,12 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-} from "./ui/card";
-import { Input } from "./ui/input";
+} from "../ui/card";
+import { Input } from "../ui/input";
 import { Search as SearchIcon } from "lucide-react";
 import { ui } from "@/i18n/ui";
 import { useTranslations } from "@/i18n/utils";
-import { getRuyiDeviceVendor } from "@/lib/data";
+import { getRuyiDeviceVendor } from "@/lib/package-index";
 
 import type { BoardMetaData, SysMetaData } from "@/lib/data";
 
@@ -246,7 +246,7 @@ const BoardsGrid: React.FC<Props> = ({
           {visibleBoards.map((board, index) => (
             <div key={`${board.dir}-${index}`} className="board-card">
               <a
-                href={getRelativeLocaleUrl(lang, `board/${board.dir}`, {
+                href={getRelativeLocaleUrl(lang, `boards/${board.dir}`, {
                   normalizeLocale: false,
                 })}
               >

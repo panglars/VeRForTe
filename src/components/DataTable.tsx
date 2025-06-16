@@ -117,7 +117,7 @@ const StatusCell = React.memo(
         <a
           href={getRelativeLocaleUrl(
             lang,
-            `board/${boardDir}/${systemInfo.sysDir}-${systemInfo.fileName}`,
+            `reports/${boardDir}-${systemInfo.sysDir}-${systemInfo.fileName}`,
             {
               normalizeLocale: false,
             },

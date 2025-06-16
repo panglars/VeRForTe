@@ -1,7 +1,7 @@
 ---
 import { getSysData } from "@/lib/data";
 
-import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { getLangFromUrl, useTranslations } from "@/i18n/utils";
@@ -79,7 +79,7 @@ try {
                 <a
                   href={getRelativeLocaleUrl(
                     lang,
-                    `board/${boardDir}/${os.sysDir}-${os.fileName}`,
+                    `reports/${boardDir}-${os.sysDir}-${os.fileName}`,
                     {
                       normalizeLocale: false,
                     },

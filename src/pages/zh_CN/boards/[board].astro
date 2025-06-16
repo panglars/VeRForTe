@@ -2,7 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import { getAllBoardsData, getBoardData, getBoardSysDirs } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import SystemList from "@/components/SystemList.astro";
+import SystemList from "@/components/boards/SystemsList.astro";
 import { getLangFromUrl } from "@/i18n/utils";
 
 const lang = getLangFromUrl(Astro.url);
@@ -43,10 +43,6 @@ try {
 
 <Layout title={board ? board.product : "Board Not Found"}>
   <div class="max-w-5xl mx-auto">
-    <a href={`/${lang}`} class="text-primary hover:underline mb-6 inline-block"
-      >← 返回首页</a
-    >
-
     {
       error ? (
         <div class="p-6 border border-red-300 bg-red-50 text-red-700 rounded-md">
