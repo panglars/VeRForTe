@@ -1,1 +1,22 @@
+---
+import { getAllSysData } from "@/lib/data";
+import Layout from "@/layouts/Layout.astro";
+import BoardsList from "@/components/systems/BoardsList.astro";
 
+export async function getStaticPaths() {
+  const sysData = await getAllSysData();
+
+  return sysData.map((system) => ({
+    params: { system: system.sysDir },
+  }));
+}
+
+const { system } = Astro.params;
+---
+
+<Layout title={`${system} Support Matrix`}>
+  <div class="container mx-auto">
+    <h1 class="text-3xl font-bold mb-8 text-center">{system} Support Matrix</h1>
+    <BoardsList system={system!} />
+  </div>
+</Layout>

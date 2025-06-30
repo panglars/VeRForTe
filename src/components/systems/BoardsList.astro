@@ -1,1 +1,94 @@
+---
+import { getAllSysData, type SysMetaData } from "@/lib/data";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
+export interface Props {
+  system: string;
+}
+
+// TODO: add i18n
+
+const { system } = Astro.props;
+
+const SysData = await getAllSysData();
+
+// Filter systems by the current system name
+const currentSysData = SysData.filter((sys) => sys.sysDir === system);
+
+// Get unique boards for this system
+const boards = [...new Set(currentSysData.map((sys) => sys.boardDir))];
+
+// Group systems by board
+interface BoardGroup {
+  board: string;
+  systems: SysMetaData[];
+}
+
+const boardGroups: BoardGroup[] = boards.map((board) => ({
+  board,
+  systems: currentSysData.filter((sys) => sys.boardDir === board),
+}));
+---
+
+{
+  boardGroups.length > 0 ? (
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {boardGroups.map((group: BoardGroup) => (
+        <Card>
+          <CardHeader>
+            <CardTitle>{group.board}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {group.systems.map((sys: SysMetaData) => (
+              <div class="border-t pt-4">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <p class="font-medium">{sys.sys}</p>
+                    {sys.sys_ver && (
+                      <p class="text-sm text-muted-foreground">
+                        Version: {sys.sys_ver}
+                      </p>
+                    )}
+                    {sys.sys_var && (
+                      <p class="text-sm text-muted-foreground">
+                        Variant: {sys.sys_var}
+                      </p>
+                    )}
+                  </div>
+                  <span
+                    class:list={[
+                      "px-3 py-1 rounded-full text-sm",
+                      {
+                        "bg-green-100 text-green-800":
+                          sys.status === "SUPPORTED",
+                        "bg-yellow-100 text-yellow-800":
+                          sys.status === "TESTING",
+                        "bg-red-100 text-red-800":
+                          sys.status !== "SUPPORTED" &&
+                          sys.status !== "TESTING",
+                      },
+                    ]}
+                  >
+                    {sys.status}
+                  </span>
+                </div>
+                {sys.last_update && (
+                  <p class="text-sm text-muted-foreground mt-2">
+                    Last updated:{" "}
+                    {new Date(sys.last_update).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  ) : (
+    <div class="text-center py-12">
+      <p class="text-xl text-muted-foreground">
+        No boards found supporting {system}
+      </p>
+    </div>
+  )
+}

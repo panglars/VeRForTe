@@ -3,9 +3,6 @@ import Layout from "@/layouts/Layout.astro";
 import { getAllBoardsData, getBoardData, getBoardSysDirs } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import SystemList from "@/components/boards/SystemsList.astro";
-import { getLangFromUrl } from "@/i18n/utils";
-
-const lang = getLangFromUrl(Astro.url);
 
 // Generate static paths for all boards
 export async function getStaticPaths() {

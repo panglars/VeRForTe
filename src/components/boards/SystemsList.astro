@@ -74,7 +74,7 @@ try {
       {osDetails.length > 0 && (
         <div class="mb-8">
           <div class="rounded-lg mb-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {osDetails.map((os) => (
                 <a
                   href={getRelativeLocaleUrl(
@@ -90,6 +90,7 @@ try {
                     <CardHeader className="items-center">
                       <CardTitle className="text-lg">{os.sysDir} </CardTitle>
                       {(() => {
+<!-- TODO: transfer to site.ts -->                        
                         const status = os.sysStatus;
                         const statusClass =
                           status === "GOOD"

@@ -8,6 +8,7 @@ import SystemList from "@/components/boards/SystemsList.astro";
 export async function getStaticPaths() {
   const boardsData = await getAllBoardsData();
 
+  // FIXME: remove props
   return boardsData.map((board) => ({
     params: { board: board.dir },
     props: { boardDir: board.dir },
@@ -39,7 +40,7 @@ try {
 ---
 
 <Layout title={board ? board.product : "Board Not Found"}>
-  <div class="max-w-5xl mx-auto">
+  <div class="container mx-auto">
     {
       error ? (
         <div class="p-6 border border-red-300 bg-red-50 text-red-700 rounded-md">
