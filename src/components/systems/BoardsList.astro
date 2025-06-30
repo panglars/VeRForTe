@@ -36,6 +36,7 @@ const boardGroups: BoardGroup[] = boards.map((board) => ({
       {boardGroups.map((group: BoardGroup) => (
         <Card>
           <CardHeader>
+            {/* FIXME: use board.product */}
             <CardTitle>{group.board}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
