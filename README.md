@@ -5,7 +5,7 @@ RISC-V Board and OS Support Matrix Website
 ## Develop
 
 ```bash
-git git@github.com:QA-Team-lo/support-matrix-frontend.git 
+git clone git@github.com:QA-Team-lo/support-matrix-frontend.git 
 
 cd ./support-matrix-frontend
 
