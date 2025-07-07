@@ -1,6 +1,7 @@
 ---
 import { getAllSysData, type SysMetaData } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { statusClassMap } from "@/config/site";
 
 export interface Props {
   system: string;
@@ -56,22 +57,19 @@ const boardGroups: BoardGroup[] = boards.map((board) => ({
                       </p>
                     )}
                   </div>
-                  <span
-                    class:list={[
-                      "px-3 py-1 rounded-full text-sm",
-                      {
-                        "bg-green-100 text-green-800":
-                          sys.status === "SUPPORTED",
-                        "bg-yellow-100 text-yellow-800":
-                          sys.status === "TESTING",
-                        "bg-red-100 text-red-800":
-                          sys.status !== "SUPPORTED" &&
-                          sys.status !== "TESTING",
-                      },
-                    ]}
-                  >
-                    {sys.status}
-                  </span>
+                  {(() => {
+                    const status = sys.status;
+                    const statusClass =
+                      statusClassMap[status] ?? statusClassMap.UNKNOWN;
+
+                    return (
+                      <span
+                        class={`inline-block px-2 rounded-md font-medium ${statusClass}`}
+                      >
+                        {status}
+                      </span>
+                    );
+                  })()}
                 </div>
                 {sys.last_update && (
                   <p class="text-sm text-muted-foreground mt-2">

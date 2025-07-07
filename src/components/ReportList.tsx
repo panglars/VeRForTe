@@ -34,6 +34,7 @@ import {
 import type { BoardMetaData, SysMetaData } from "@/lib/data";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { useTranslations } from "@/i18n/utils";
+import { statusClassMap } from "@/config/site";
 
 interface ComboboxProps {
   options: { value: string; label: string }[];
@@ -115,10 +116,6 @@ function Combobox({
 // Status cell component
 const StatusCell = ({
   status,
-  lang,
-  boardDir,
-  systemDir,
-  fileName,
 }: {
   status: string | null;
   lang: string;
@@ -128,21 +125,12 @@ const StatusCell = ({
 }) => {
   if (!status) return <span>-</span>;
 
-  const statusClass =
-    status === "GOOD"
-      ? "bg-sky-100 text-sky-800 dark:bg-sky-800 dark:text-sky-100"
-      : status === "BASIC"
-        ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-        : status === "CFH"
-          ? "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
-          : status === "CFT"
-            ? "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
-            : status === "WIP"
-              ? "bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-800 dark:text-fuchsia-100"
-              : "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100";
+  const statusClass = statusClassMap[status] ?? statusClassMap.UNKNOWN;
 
   return (
-    <span className={`inline-block px-2 rounded-md font-medium ${statusClass}`}>
+    <span
+      className={`inline-block px-2 rounded-md font-medium ${statusClass}`}
+    >
       {status}
     </span>
   );

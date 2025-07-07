@@ -39,6 +39,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { statusClassMap } from "@/config/site";
 
 interface DataTableProps {
   lang: string;
@@ -67,15 +68,6 @@ interface AugmentedRowData {
   board: BoardMetaData;
   statuses: Record<string, StatusEntry>;
 }
-
-const statusClassMap: Record<string, string> = {
-  GOOD: "bg-sky-100 text-sky-800 dark:bg-sky-800 dark:text-sky-100",
-  BASIC: "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100",
-  CFH: "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100",
-  CFT: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100",
-  WIP: "bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-800 dark:text-fuchsia-100",
-  CFI: "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100",
-};
 
 const StatusCell = React.memo(
   ({
