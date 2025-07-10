@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import SortDropdown from "./SortDropdown";
 import type { SortOption } from "./SortDropdown";
 import { Input } from "./ui/input";
@@ -34,96 +34,91 @@ const Overview: React.FC<Props> = ({
 
   const [deviceNames, setDeviceNames] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [visibleBoards, setVisibleBoards] =
-    useState<BoardMetaData[]>(initialBoards);
-  const [visibleSystems, setVisibleSystems] =
-    useState<SysMetaData[]>(initialSysData);
   const [view, setView] = useState<View>("boards");
-
-  const boardSortOptions: GenericSortOption[] = [
-    {
-      id: "vendor-asc",
-      label: t("sort.ruyi"),
-      field: "vendor",
-      direction: "asc",
-      sortFn: (a, b) => {
-        const vendorA = a.vendor?.toLowerCase() || "";
-        const vendorB = b.vendor?.toLowerCase() || "";
-        const isDeviceA = deviceNames.includes(vendorA);
-        const isDeviceB = deviceNames.includes(vendorB);
-        if (isDeviceA === isDeviceB) {
-          return (a.product || "").localeCompare(b.product || "");
-        }
-        return isDeviceA ? -1 : 1;
-      },
-    },
-    {
-      id: "product-asc",
-      label: t("sort.asc"),
-      field: "product",
-      direction: "asc",
-      sortFn: (a, b) => (a.product || "").localeCompare(b.product || ""),
-    },
-    {
-      id: "product-desc",
-      label: t("sort.desc"),
-      field: "product",
-      direction: "desc",
-      sortFn: (a, b) => (b.product || "").localeCompare(a.product || ""),
-    },
-  ];
-
-  const systemSortOptions: GenericSortOption[] = [
-    {
-      id: "sys-asc",
-      label: t("sort.asc"),
-      field: "sys",
-      direction: "asc",
-      sortFn: (a, b) => (a.sys || "").localeCompare(b.sys || ""),
-    },
-    {
-      id: "sys-desc",
-      label: t("sort.desc"),
-      field: "sys",
-      direction: "desc",
-      sortFn: (a, b) => (b.sys || "").localeCompare(a.sys || ""),
-    },
-    {
-      id: "board-asc",
-      label: "Board Asc",
-      field: "boardDir",
-      direction: "asc",
-      sortFn: (a, b) => (a.boardDir || "").localeCompare(b.boardDir || ""),
-    },
-    {
-      id: "board-desc",
-      label: "Board Desc",
-      field: "boardDir",
-      direction: "desc",
-      sortFn: (a, b) => (b.boardDir || "").localeCompare(a.boardDir || ""),
-    },
-  ];
-
-  const [currentSort, setCurrentSort] = useState<GenericSortOption>(
-    boardSortOptions[0],
-  );
+  const [currentSortId, setCurrentSortId] = useState<string>("vendor-asc");
 
   useEffect(() => {
-    const initialSort = () => {
-      const defaultSort = boardSortOptions[0];
-      setCurrentSort(defaultSort);
-      applyFilterAndSort(searchQuery, defaultSort);
-    };
-
     getRuyiDeviceVendor().then((names) => {
       setDeviceNames(names);
-      initialSort();
     });
+  }, []);
 
-    if (deviceNames.length === 0) {
-      initialSort();
-    }
-  }, [initialBoards, initialSysData, deviceNames]);
+  const boardSortOptions: GenericSortOption[] = useMemo(
+    () => [
+      {
+        id: "vendor-asc",
+        label: t("sort.ruyi"),
+        field: "vendor",
+        direction: "asc",
+        sortFn: (a, b) => {
+          const vendorA = a.vendor?.toLowerCase() || "";
+          const vendorB = b.vendor?.toLowerCase() || "";
+          const isDeviceA = deviceNames.includes(vendorA);
+          const isDeviceB = deviceNames.includes(vendorB);
+          if (isDeviceA === isDeviceB) {
+            return (a.product || "").localeCompare(b.product || "");
+          }
+          return isDeviceA ? -1 : 1;
+        },
+      },
+      {
+        id: "product-asc",
+        label: t("sort.asc"),
+        field: "product",
+        direction: "asc",
+        sortFn: (a, b) => (a.product || "").localeCompare(b.product || ""),
+      },
+      {
+        id: "product-desc",
+        label: t("sort.desc"),
+        field: "product",
+        direction: "desc",
+        sortFn: (a, b) => (b.product || "").localeCompare(a.product || ""),
+      },
+    ],
+    [deviceNames, t],
+  );
+
+  const systemSortOptions: GenericSortOption[] = useMemo(
+    () => [
+      {
+        id: "sys-asc",
+        label: t("sort.asc"),
+        field: "sys",
+        direction: "asc",
+        sortFn: (a, b) => (a.sys || "").localeCompare(b.sys || ""),
+      },
+      {
+        id: "sys-desc",
+        label: t("sort.desc"),
+        field: "sys",
+        direction: "desc",
+        sortFn: (a, b) => (b.sys || "").localeCompare(a.sys || ""),
+      },
+      {
+        id: "board-asc",
+        label: "Board Asc",
+        field: "boardDir",
+        direction: "asc",
+        sortFn: (a, b) => (a.boardDir || "").localeCompare(b.boardDir || ""),
+      },
+      {
+        id: "board-desc",
+        label: "Board Desc",
+        field: "boardDir",
+        direction: "desc",
+        sortFn: (a, b) => (b.boardDir || "").localeCompare(a.boardDir || ""),
+      },
+    ],
+    [t],
+  );
+
+  const currentSort = useMemo(() => {
+    const allOptions = [...boardSortOptions, ...systemSortOptions];
+    return (
+      allOptions.find((opt) => opt.id === currentSortId) || boardSortOptions[0]
+    );
+  }, [currentSortId, boardSortOptions, systemSortOptions]);
 
   const sortItems = (items: any[], sortOption: GenericSortOption) => {
     if (sortOption.sortFn) {
@@ -138,8 +133,8 @@ const Overview: React.FC<Props> = ({
     });
   };
 
-  const applyFilterAndSort = (query: string, sortOption: GenericSortOption) => {
-    const normalizedQuery = query.toLowerCase().trim();
+  const filteredData = useMemo(() => {
+    const normalizedQuery = searchQuery.toLowerCase().trim();
 
     let filteredBoards = initialBoards;
     let filteredSystems = initialSysData;
@@ -163,47 +158,50 @@ const Overview: React.FC<Props> = ({
       });
     }
 
-    const isBoardSort = ["vendor", "product"].includes(sortOption.field);
+    return { filteredBoards, filteredSystems };
+  }, [initialBoards, initialSysData, searchQuery]);
+
+  const sortedData = useMemo(() => {
+    const { filteredBoards, filteredSystems } = filteredData;
+    const isBoardSort = ["vendor", "product"].includes(currentSort.field);
+
+    let sortedBoards: BoardMetaData[];
+    let sortedSystems: SysMetaData[];
 
     if (isBoardSort) {
-      setVisibleBoards(
-        sortItems(filteredBoards, sortOption) as BoardMetaData[],
-      );
-      setVisibleSystems(
-        sortItems(filteredSystems, systemSortOptions[0]) as SysMetaData[],
-      );
+      sortedBoards = sortItems(filteredBoards, currentSort) as BoardMetaData[];
+      sortedSystems = sortItems(
+        filteredSystems,
+        systemSortOptions[0],
+      ) as SysMetaData[];
     } else {
-      setVisibleBoards(
-        sortItems(filteredBoards, boardSortOptions[0]) as BoardMetaData[],
-      );
-      setVisibleSystems(
-        sortItems(filteredSystems, sortOption) as SysMetaData[],
-      );
+      sortedBoards = sortItems(
+        filteredBoards,
+        boardSortOptions[0],
+      ) as BoardMetaData[];
+      sortedSystems = sortItems(filteredSystems, currentSort) as SysMetaData[];
     }
-  };
+
+    return { sortedBoards, sortedSystems };
+  }, [filteredData, currentSort, boardSortOptions, systemSortOptions]);
+
+  const { sortedBoards: visibleBoards, sortedSystems: visibleSystems } =
+    sortedData;
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuery = e.target.value;
-    setSearchQuery(newQuery);
-    applyFilterAndSort(newQuery, currentSort);
+    setSearchQuery(e.target.value);
   };
 
   const handleSortChange = (sortOption: SortOption) => {
-    const newSortOption = sortOption as GenericSortOption;
-    setCurrentSort(newSortOption);
-    applyFilterAndSort(searchQuery, newSortOption);
+    setCurrentSortId(sortOption.id);
   };
 
   const handleViewChange = (newView: View) => {
     setView(newView);
     if (newView === "boards") {
-      const newSort = boardSortOptions[0];
-      setCurrentSort(newSort);
-      applyFilterAndSort(searchQuery, newSort);
+      setCurrentSortId("vendor-asc");
     } else {
-      const newSort = systemSortOptions[0];
-      setCurrentSort(newSort);
-      applyFilterAndSort(searchQuery, newSort);
+      setCurrentSortId("sys-asc");
     }
   };
 
