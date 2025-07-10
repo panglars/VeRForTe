@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
+@theme {
+    --font-sans: "Inter", "sans-serif";
+}
+
 @plugin "tailwindcss-animate";
 @plugin "@tailwindcss/typography";
 @config "../styles/tailwind.config.js";
 
 @custom-variant dark (&:is(.dark *));
-
-@theme {
-    --font-sans: "Inter", "sans-serif";
-}
 
 :root {
     --background: oklch(1 0 0);

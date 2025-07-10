@@ -6,10 +6,32 @@ import { getRelativeLocaleUrl } from "astro:i18n";
 import { getLangFromUrl, useTranslations } from "@/i18n/utils";
 import { Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SidebarToggle from "./SidebarToggle";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const currentPath = Astro.url.pathname;
+
+const navigation = [
+  {
+    label: t("nav.board"),
+    href: getRelativeLocaleUrl(lang, "", {
+      normalizeLocale: false,
+    }),
+  },
+  {
+    label: t("nav.table"),
+    href: getRelativeLocaleUrl(lang, "table/", {
+      normalizeLocale: false,
+    }),
+  },
+  {
+    label: t("nav.list"),
+    href: getRelativeLocaleUrl(lang, "reports/", {
+      normalizeLocale: false,
+    }),
+  },
+];
 ---
 
 <script is:inline>
@@ -48,61 +70,32 @@ const currentPath = Astro.url.pathname;
   });
 </script>
 
-<header class="border-b py-4">
+<header class="border-b py-4 relative">
   <div class="container mx-auto lg:max-w-5xl">
-    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center">
-      <div class="flex justify-between items-center">
-        <a
-          href={siteConfig.links.ruyisdk}
-          class="text-xl font-bold flex items-center gap-2"
-        >
-          <img src="/favicon.svg" alt="Logo" class="h-8 w-8" />
-          {siteConfig.name}
-        </a>
-
-        <div class="flex items-center lg:hidden">
-          <a
-            href={siteConfig.links.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ textDecoration: "none" }}
-          >
-            <Button variant="ghost" size="icon">
-              <Github className="h-5 w-5" />
-            </Button>
-          </a>
-
-          <LangToggle client:load currentPath={currentPath} />
-          <ModeToggle client:load />
-        </div>
-      </div>
-
-      <nav
-        class="flex flex-col lg:flex-row mt-4 lg:mt-0 space-y-4 lg:space-y-0"
+    <div class="flex justify-between items-center">
+      <!-- Logo -->
+      <a
+        href={siteConfig.links.ruyisdk}
+        class="text-xl font-bold flex items-center gap-2"
       >
-        <a
-          href={getRelativeLocaleUrl(lang, "", {
-            normalizeLocale: false,
-          })}
-          class="text-xl lg:mx-6">{t("nav.board")}</a
-        >
+        <img src="/favicon.svg" alt="Logo" class="h-8 w-8" />
+        {siteConfig.name}
+      </a>
 
-        <a
-          href={getRelativeLocaleUrl(lang, "table/", {
-            normalizeLocale: false,
-          })}
-          class="text-xl lg:mx-6">{t("nav.table")}</a
-        >
-
-        <a
-          href={getRelativeLocaleUrl(lang, "reports/", {
-            normalizeLocale: false,
-          })}
-          class="text-xl lg:mx-6">{t("nav.list")}</a
-        >
+      <!-- Desktop Navigation -->
+      <nav class="hidden lg:flex items-center space-x-6">
+        {navigation.map((item) => (
+          <a
+            href={item.href}
+            class="text-xl hover:text-primary transition-colors"
+          >
+            {item.label}
+          </a>
+        ))}
       </nav>
 
-      <div class="hidden lg:flex items-center">
+      <!-- Desktop Controls -->
+      <div class="hidden lg:flex items-center space-x-2">
         <a
           href={siteConfig.links.github}
           target="_blank"
@@ -117,6 +110,14 @@ const currentPath = Astro.url.pathname;
         <LangToggle client:load currentPath={currentPath} />
         <ModeToggle client:load />
       </div>
+
+      <!-- Mobile Sidebar Toggle -->
+      <SidebarToggle
+        client:load
+        navigation={navigation}
+        github={siteConfig.links.github}
+        currentPath={currentPath}
+      />
     </div>
   </div>
 </header>
