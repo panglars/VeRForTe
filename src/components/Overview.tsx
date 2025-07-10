@@ -34,8 +34,10 @@ const Overview: React.FC<Props> = ({
 
   const [deviceNames, setDeviceNames] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [visibleBoards, setVisibleBoards] = useState<BoardMetaData[]>([]);
-  const [visibleSystems, setVisibleSystems] = useState<SysMetaData[]>([]);
+  const [visibleBoards, setVisibleBoards] =
+    useState<BoardMetaData[]>(initialBoards);
+  const [visibleSystems, setVisibleSystems] =
+    useState<SysMetaData[]>(initialSysData);
   const [view, setView] = useState<View>("boards");
 
   const boardSortOptions: GenericSortOption[] = [
@@ -107,11 +109,21 @@ const Overview: React.FC<Props> = ({
   );
 
   useEffect(() => {
+    const initialSort = () => {
+      const defaultSort = boardSortOptions[0];
+      setCurrentSort(defaultSort);
+      applyFilterAndSort(searchQuery, defaultSort);
+    };
+
     getRuyiDeviceVendor().then((names) => {
       setDeviceNames(names);
-      applyFilterAndSort(searchQuery, boardSortOptions[0]);
+      initialSort();
     });
-  }, [initialBoards, initialSysData]);
+
+    if (deviceNames.length === 0) {
+      initialSort();
+    }
+  }, [initialBoards, initialSysData, deviceNames]);
 
   const sortItems = (items: any[], sortOption: GenericSortOption) => {
     if (sortOption.sortFn) {
