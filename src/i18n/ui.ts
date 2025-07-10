@@ -7,7 +7,7 @@ export const defaultLang = "en";
 
 export const ui = {
   en: {
-    "nav.board": "Board Overview",
+    "nav.index": "Board Overview",
     "nav.table": "OS Support",
     "nav.list": "Test Reports",
     error: "Error",
@@ -70,7 +70,7 @@ export const ui = {
     "compare.filtered_boards": "Showing {count} of {total} boards",
   },
   zh_CN: {
-    "nav.board": "开发板总览",
+    "nav.index": "开发板总览",
     "nav.table": "系统支持",
     "nav.list": "测试报告",
     error: "错误",

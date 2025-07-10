@@ -1,9 +1,10 @@
 ---
-import Header from "../components/Header.astro";
+import Header from "@/components/Header";
 import Footer from "../components/Footer.astro";
 import { getLangFromUrl, useTranslations } from "../i18n/utils";
 import { ClientRouter } from "astro:transitions";
 import "@fontsource-variable/inter";
+import { siteConfig } from "@/config/site";
 
 export interface Props {
   title: string;
@@ -12,6 +13,7 @@ export interface Props {
 const lang = getLangFromUrl(Astro.url);
 const { title } = Astro.props;
 const t = useTranslations(lang);
+const currentPath = Astro.url.pathname;
 ---
 
 <!doctype html>
@@ -26,7 +28,17 @@ const t = useTranslations(lang);
     <ClientRouter />
   </head>
   <body class="min-h-screen bg-background text-foreground">
-    <Header />
+    <Header
+      client:load
+      siteConfig={siteConfig}
+      navigation={[
+        { label: "nav.index", href: "/" },
+        { label: "nav.table", href: "/table/" },
+        { label: "nav.list", href: "/reports/" },
+      ]}
+      currentPath={currentPath}
+      lang={lang}
+    />
     <main class="mx-auto px-4 py-8">
       <slot />
     </main>

@@ -3,6 +3,7 @@ import { Github, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./ModeToggle";
 import { LangToggle } from "./LangToggle";
+import { useTranslations } from "@/i18n/utils";
 
 interface SidebarToggleProps {
   navigation: {
@@ -11,13 +12,17 @@ interface SidebarToggleProps {
   }[];
   github: string;
   currentPath: string;
+  lang: any;
 }
 
 const SidebarToggle: React.FC<SidebarToggleProps> = ({
   navigation,
   github,
   currentPath,
+  lang,
 }) => {
+  const t = useTranslations(lang);
+
   const [isOpen, setIsOpen] = useState(false);
 
   const openSidebar = () => {
@@ -107,7 +112,7 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({
                   className="block text-base py-2 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
                   onClick={closeSidebar}
                 >
-                  {item.label}
+                  {t(item.label)}
                 </a>
               ))}
             </nav>
