@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Github, Menu, X } from "lucide-react";
+import { Github, Menu, X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./ModeToggle";
 import { LangToggle } from "./LangToggle";
 import { useTranslations } from "@/i18n/utils";
+import { getRelativeLocaleUrl } from "astro:i18n";
 
 interface SidebarToggleProps {
   navigation: {
@@ -24,6 +25,11 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({
   const t = useTranslations(lang);
 
   const [isOpen, setIsOpen] = useState(false);
+
+  // Helper function to check if URL is absolute
+  const isAbsoluteUrl = (url: string) => {
+    return /^https?:\/\//.test(url);
+  };
 
   const openSidebar = () => {
     setIsOpen(true);
@@ -105,16 +111,30 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({
           <div className="flex-1 overflow-y-auto">
             {/* Navigation Links */}
             <nav className="p-3 space-y-3">
-              {navigation.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className="block text-base py-2 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-                  onClick={closeSidebar}
-                >
-                  {t(item.label)}
-                </a>
-              ))}
+              {navigation.map((item) => {
+                const isExternal = isAbsoluteUrl(item.href);
+                const href = isExternal 
+                  ? item.href 
+                  : getRelativeLocaleUrl(lang, item.href, {
+                      normalizeLocale: false,
+                    });
+                
+                return (
+                  <a
+                    key={item.href}
+                    href={href}
+                    className="block text-base py-2 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-1"
+                    onClick={closeSidebar}
+                    {...(isExternal && { 
+                      target: "_blank", 
+                      rel: "noopener noreferrer" 
+                    })}
+                  >
+                    {t(item.label)}
+                    {isExternal && <ExternalLink className="h-4 w-4 flex-shrink-0" />}
+                  </a>
+                );
+              })}
             </nav>
 
             {/* Sidebar Controls */}
