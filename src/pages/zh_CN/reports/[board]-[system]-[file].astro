@@ -78,7 +78,9 @@ try {
 }
 
 const title =
-  board && sysData ? `${sysData.sys} 在 ${board.product}` : "未找到该系统";
+  board && sysData
+    ? `${sysData.sysDir} 在 ${board.product} 上的测试报告 `
+    : "未找到该系统";
 ---
 
 <Layout title={title}>
