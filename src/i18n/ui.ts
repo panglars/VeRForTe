@@ -7,10 +7,11 @@ export const defaultLang = "en";
 
 export const ui = {
   en: {
-    "nav.index": "Board Overview",
-    "nav.table": "OS Support",
-    "nav.list": "Test Reports",
+    "nav.index": "RISC-V Board and OS Support Matrix",
+    "nav.table": "OS Support Sheet",
+    "nav.list": "Test Reports List",
     "nav.ruyi": "RuyiSDK",
+    "nav.ruyi_community": "RuyiSDK Community",
     error: "Error",
     cpu: "CPU",
     core: "Core",
@@ -71,10 +72,11 @@ export const ui = {
     "compare.filtered_boards": "Showing {count} of {total} boards",
   },
   zh_CN: {
-    "nav.index": "开发板总览",
-    "nav.table": "系统支持",
-    "nav.list": "测试报告",
+    "nav.index": "RISC-V 开发板和操作系统支持矩阵",
+    "nav.table": "系统支持表格",
+    "nav.list": "测试报告列表",
     "nav.ruyi": "RuyiSDK",
+    "nav.ruyi_community": "RuyiSDK开发者社区",
     error: "错误",
     cpu: "处理器",
     core: "核心",

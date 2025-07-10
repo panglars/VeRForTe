@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Github, Menu, X, ExternalLink } from "lucide-react";
+import { Github, Menu, X, ExternalLink, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./ModeToggle";
 import { LangToggle } from "./LangToggle";
@@ -11,6 +11,10 @@ interface SidebarToggleProps {
     label: string;
     href: string;
   }[];
+  externalLinks?: {
+    label: string;
+    href: string;
+  }[];
   github: string;
   currentPath: string;
   lang: any;
@@ -18,6 +22,7 @@ interface SidebarToggleProps {
 
 const SidebarToggle: React.FC<SidebarToggleProps> = ({
   navigation,
+  externalLinks = [],
   github,
   currentPath,
   lang,
@@ -25,11 +30,6 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({
   const t = useTranslations(lang);
 
   const [isOpen, setIsOpen] = useState(false);
-
-  // Helper function to check if URL is absolute
-  const isAbsoluteUrl = (url: string) => {
-    return /^https?:\/\//.test(url);
-  };
 
   const openSidebar = () => {
     setIsOpen(true);
@@ -95,13 +95,23 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-3 border-b">
-            <span className="text-lg font-semibold">Menu</span>
+          <div className="flex items-center justify-between p-4 border-b">
+            <a
+              href={getRelativeLocaleUrl(lang, "/", {
+                normalizeLocale: false,
+              })}
+              className="text-lg font-semibold hover:text-primary transition-colors flex items-center gap-3"
+              onClick={closeSidebar}
+            >
+              <Home className="h-5 w-5" />
+              {t("nav.index")}
+            </a>
             <Button
               variant="ghost"
               size="icon"
               onClick={closeSidebar}
               aria-label="Close menu"
+              className="h-10 w-10"
             >
               <X className="h-6 w-6" />
             </Button>
@@ -109,37 +119,50 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({
 
           {/* Sidebar Content */}
           <div className="flex-1 overflow-y-auto">
-            {/* Navigation Links */}
-            <nav className="p-3 space-y-3">
-              {navigation.map((item) => {
-                const isExternal = isAbsoluteUrl(item.href);
-                const href = isExternal 
-                  ? item.href 
-                  : getRelativeLocaleUrl(lang, item.href, {
-                      normalizeLocale: false,
-                    });
-                
-                return (
-                  <a
-                    key={item.href}
-                    href={href}
-                    className="block text-base py-2 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-1"
-                    onClick={closeSidebar}
-                    {...(isExternal && { 
-                      target: "_blank", 
-                      rel: "noopener noreferrer" 
-                    })}
-                  >
-                    {t(item.label)}
-                    {isExternal && <ExternalLink className="h-4 w-4 flex-shrink-0" />}
-                  </a>
-                );
-              })}
+            {/* Internal Navigation Links */}
+            <nav className="p-4 space-y-1">
+              <div className="text-sm font-medium text-muted-foreground mb-3 px-3">
+                {t("navigation")}
+              </div>
+              {navigation.map((item) => (
+                <a
+                  key={item.href}
+                  href={getRelativeLocaleUrl(lang, item.href, {
+                    normalizeLocale: false,
+                  })}
+                  className="block text-base py-3 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                  onClick={closeSidebar}
+                >
+                  {t(item.label)}
+                </a>
+              ))}
             </nav>
 
+            {/* External Links */}
+            {externalLinks.length > 0 && (
+              <nav className="px-4 pb-4 space-y-1 border-t">
+                <div className="text-sm font-medium text-muted-foreground mb-3 mt-4 px-3">
+                  {t("external_links")}
+                </div>
+                {externalLinks.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-base py-3 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2"
+                    onClick={closeSidebar}
+                  >
+                    {t(link.label)}
+                    <ExternalLink className="h-4 w-4 flex-shrink-0" />
+                  </a>
+                ))}
+              </nav>
+            )}
+
             {/* Sidebar Controls */}
-            <div className="border-t p-3">
-              <div className="flex items-center justify-center space-x-2">
+            <div className="border-t p-4">
+              <div className="flex items-center justify-center space-x-3">
                 <ModeToggle />
                 <LangToggle currentPath={currentPath} />
                 <a
@@ -148,7 +171,7 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({
                   rel="noopener noreferrer"
                   style={{ textDecoration: "none" }}
                 >
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" className="h-10 w-10">
                     <Github className="h-5 w-5" />
                   </Button>
                 </a>

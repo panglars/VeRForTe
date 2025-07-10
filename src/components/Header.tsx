@@ -9,13 +9,16 @@ import { getRelativeLocaleUrl } from "astro:i18n";
 
 interface HeaderProps {
   siteConfig: {
-    name: string;
     links: {
       ruyisdk: string;
       github: string;
     };
   };
   navigation: {
+    label: string;
+    href: string;
+  }[];
+  externalLinks?: {
     label: string;
     href: string;
   }[];
@@ -26,61 +29,70 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({
   siteConfig,
   navigation,
+  externalLinks = [],
   currentPath,
   lang,
 }) => {
   const t = useTranslations(lang);
 
-  // Helper function to check if URL is absolute
-  const isAbsoluteUrl = (url: string) => {
-    return /^https?:\/\//.test(url);
-  };
-
   return (
     <header className="border-b py-4 relative">
-      <div className="container mx-auto lg:max-w-5xl">
+      <div className="container mx-auto px-4">
         <div className="flex justify-between items-center">
-          <a href="/" className="text-xl font-bold flex items-center gap-2">
-            <img src="/favicon.svg" alt="Logo" className="h-8 w-8" />
-            {siteConfig.name}
-          </a>
+          {/* Left side: Logo and Internal Navigation */}
+          <div className="flex items-center space-x-8">
+            <a
+              href={getRelativeLocaleUrl(lang, "", {
+                normalizeLocale: false,
+              })}
+              className="text-xl font-bold flex items-center gap-3"
+            >
+              <img src="/favicon.svg" alt="Logo" className="h-8 w-8" />
+              {t("nav.index")}
+            </a>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-6">
-            {navigation.map((item) => {
-              const isExternal = isAbsoluteUrl(item.href);
-              const href = isExternal 
-                ? item.href 
-                : getRelativeLocaleUrl(lang, item.href, {
-                    normalizeLocale: false,
-                  });
-              
-              return (
+            <nav className="hidden lg:flex items-center space-x-8">
+              {navigation.map((item) => (
                 <a
                   key={item.href}
-                  href={href}
-                  className="text-xl hover:text-primary transition-colors flex items-center gap-1"
-                  {...(isExternal && { 
-                    target: "_blank", 
-                    rel: "noopener noreferrer" 
+                  href={getRelativeLocaleUrl(lang, item.href, {
+                    normalizeLocale: false,
                   })}
+                  className="text-base hover:text-primary transition-colors"
                 >
                   {t(item.label)}
-                  {isExternal && <ExternalLink className="h-4 w-4" />}
                 </a>
-              );
-            })}
-          </nav>
+              ))}
+            </nav>
+          </div>
 
-          {/* Desktop Controls */}
-          <div className="hidden lg:flex items-center space-x-2">
+          {/* Right side: External Links and Controls */}
+          <div className="hidden lg:flex items-center space-x-3">
+            {externalLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-base hover:text-primary transition-colors flex items-center gap-1.5 px-2"
+              >
+                {t(link.label)}
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            ))}
+
+            {/* Separator */}
+            {externalLinks.length > 0 && (
+              <div className="h-5 w-px bg-border" />
+            )}
+
             <a
               href={siteConfig.links.github}
               target="_blank"
               rel="noopener noreferrer"
               style={{ textDecoration: "none" }}
             >
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="h-10 w-10">
                 <Github className="h-5 w-5" />
               </Button>
             </a>
@@ -89,9 +101,9 @@ const Header: React.FC<HeaderProps> = ({
             <ModeToggle />
           </div>
 
-          {/* Mobile Sidebar Toggle */}
           <SidebarToggle
             navigation={navigation}
+            externalLinks={externalLinks}
             github={siteConfig.links.github}
             currentPath={currentPath}
             lang={lang}
