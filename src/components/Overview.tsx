@@ -95,20 +95,6 @@ const Overview: React.FC<Props> = ({
         direction: "desc",
         sortFn: (a, b) => (b.sys || "").localeCompare(a.sys || ""),
       },
-      {
-        id: "board-asc",
-        label: "Board Asc",
-        field: "boardDir",
-        direction: "asc",
-        sortFn: (a, b) => (a.boardDir || "").localeCompare(b.boardDir || ""),
-      },
-      {
-        id: "board-desc",
-        label: "Board Desc",
-        field: "boardDir",
-        direction: "desc",
-        sortFn: (a, b) => (b.boardDir || "").localeCompare(a.boardDir || ""),
-      },
     ],
     [t],
   );
