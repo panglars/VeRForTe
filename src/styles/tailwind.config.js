@@ -1,7 +1,12 @@
+const { fontFamily } = require("tailwindcss/defaultTheme");
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     theme: {
         extend: {
+            fontFamily: {
+                sans: ["Inter Variable", ...fontFamily.sans],
+            },
             typography: {
                 DEFAULT: {
                     css: {
