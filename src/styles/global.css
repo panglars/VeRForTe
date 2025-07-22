@@ -39,6 +39,7 @@
     --sidebar-accent-foreground: oklch(1 0 0);
     --sidebar-border: oklch(0.9067 0 0);
     --sidebar-ring: oklch(0.3176 0.0981 253.0501);
+    /* TODO: add SC font */
     --font-sans: Open Sans, sans-serif;
     --font-serif: var(--font-geist-sans);
     --font-mono: var(--font-geist-mono);
