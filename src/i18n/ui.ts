@@ -7,7 +7,7 @@ export const defaultLang = "en";
 
 export const ui = {
   en: {
-    "nav.index": "RISC-V Board and OS Support Matrix",
+    "nav.index": "RISC-V Test Matrix",
     "nav.table": "OS Support Sheet",
     "nav.list": "Test Reports List",
     "nav.ruyi": "RuyiSDK",
@@ -72,7 +72,7 @@ export const ui = {
     "compare.filtered_boards": "Showing {count} of {total} boards",
   },
   zh_CN: {
-    "nav.index": "RISC-V 开发板和操作系统支持矩阵",
+    "nav.index": "RISC-V 测试矩阵",
     "nav.table": "系统支持表格",
     "nav.list": "测试报告列表",
     "nav.ruyi": "RuyiSDK",
