@@ -1,10 +1,10 @@
 import React from "react";
-import { Github, ExternalLink } from "lucide-react";
+import { ExternalLink, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./ModeToggle";
 import { LangToggle } from "./LangToggle";
 import SidebarToggle from "./SidebarToggle";
-import { useTranslations, getLangFromUrl } from "@/i18n/utils";
+import { useTranslations } from "@/i18n/utils";
 import { getRelativeLocaleUrl } from "astro:i18n";
 
 interface HeaderProps {
@@ -82,9 +82,7 @@ const Header: React.FC<HeaderProps> = ({
             ))}
 
             {/* Separator */}
-            {externalLinks.length > 0 && (
-              <div className="h-5 w-px bg-border" />
-            )}
+            {externalLinks.length > 0 && <div className="h-5 w-px bg-border" />}
 
             <a
               href={siteConfig.links.github}
