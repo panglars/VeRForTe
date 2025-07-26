@@ -21,16 +21,16 @@ export const LangToggle: React.FC<LangToggleProps> = ({ currentPath }) => {
     );
   }
 
-  const isZhCN = currentPath.startsWith("/zh_CN/") || currentPath === "/zh_CN";
+  const isZhCN = currentPath.startsWith("/zh-CN/") || currentPath === "/zh-CN";
 
   const toggleLanguage = () => {
     if (isZhCN) {
       // zh_CN to en
-      const newPath = currentPath.replace(/^\/zh_CN/, "");
+      const newPath = currentPath.replace(/^\/zh-CN/, "");
       window.location.href = newPath || "/";
     } else {
       // en to zh_CN
-      window.location.href = `/zh_CN${currentPath}`;
+      window.location.href = `/zh-CN${currentPath}`;
     }
   };
 

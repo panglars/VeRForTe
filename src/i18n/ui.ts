@@ -1,6 +1,6 @@
 export const languages = {
   en: "English",
-  zh_CN: "简体中文",
+  "zh-CN": "简体中文",
 };
 
 export const defaultLang = "en";
@@ -71,7 +71,7 @@ export const ui = {
       "Only showing boards with support data in current category",
     "compare.filtered_boards": "Showing {count} of {total} boards",
   },
-  zh_CN: {
+  "zh-CN": {
     "nav.index": "RISC-V 测试矩阵",
     "nav.table": "系统支持表格",
     "nav.list": "测试报告列表",
