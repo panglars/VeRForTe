@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { themeAtom } from "@/lib/jotai";
+import { themeAtom } from "@/lib/atom";
 
 interface LangToggleProps {
   currentPath: string;
@@ -33,15 +33,15 @@ export const LangToggle: React.FC<LangToggleProps> = ({ currentPath }) => {
 
   const isZhCN = currentPath.startsWith("/zh-CN/") || currentPath === "/zh-CN";
 
-  const switchToLanguage = (lang: 'en' | 'zh-CN') => {
+  const switchToLanguage = (lang: "en" | "zh-CN") => {
     // Preserve theme state in URL hash
     const themeParam = `#theme=${theme}`;
-    
-    if (lang === 'en' && isZhCN) {
+
+    if (lang === "en" && isZhCN) {
       // zh_CN to en
       const newPath = currentPath.replace(/^\/zh-CN/, "");
       window.location.href = (newPath || "/") + themeParam;
-    } else if (lang === 'zh-CN' && !isZhCN) {
+    } else if (lang === "zh-CN" && !isZhCN) {
       // en to zh_CN
       window.location.href = `/zh-CN${currentPath}${themeParam}`;
     }
@@ -56,10 +56,10 @@ export const LangToggle: React.FC<LangToggleProps> = ({ currentPath }) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => switchToLanguage('en')}>
+        <DropdownMenuItem onClick={() => switchToLanguage("en")}>
           English
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => switchToLanguage('zh-CN')}>
+        <DropdownMenuItem onClick={() => switchToLanguage("zh-CN")}>
           中文
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { themeAtom, setThemeAtom } from "@/lib/jotai";
+import { themeAtom, setThemeAtom } from "@/lib/atom";
 
 export function ModeToggle() {
   const [theme] = useAtom(themeAtom);
