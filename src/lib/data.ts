@@ -280,6 +280,9 @@ async function loadReportsFromMarkdown(): Promise<Omit<ReportMetaData, 'sourceTy
 
     const [, boardId, sysDir, fileName] = match;
     
+    // Skip excluded directories
+    if (["assets", ".github", "report-template"].includes(boardId)) return null;
+    
     // Skip Chinese translations
     if (fileName.endsWith("_zh")) return null;
 
@@ -320,6 +323,9 @@ async function loadReportsFromOthersYml(): Promise<Omit<ReportMetaData, 'sourceT
     if (!match) return [];
 
     const boardId = match[1];
+    
+    // Skip excluded directories
+    if (["assets", ".github", "report-template"].includes(boardId)) return [];
 
     try {
       const content = (await importFn()) as string;

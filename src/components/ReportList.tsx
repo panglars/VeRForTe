@@ -5,7 +5,6 @@ import {
   getCoreRowModel,
   useReactTable,
   getSortedRowModel,
-  getFilteredRowModel,
   type SortingState,
 } from "@tanstack/react-table";
 import {
@@ -16,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -31,105 +30,129 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import type { BoardMetaData, SysMetaData } from "@/lib/data";
+import { Badge } from "@/components/ui/badge";
+import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import type { ReportMetaData } from "@/lib/data";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { useTranslations } from "@/i18n/utils";
 import { statusClassMap } from "@/config/site";
+import { format, isWithinInterval } from "date-fns";
+import type { DateRange } from "react-day-picker";
 
-interface ComboboxProps {
+// Enhanced interface for enriched report data
+interface EnrichedReport extends ReportMetaData {
+  boardProduct: string;
+  cpu: string;
+  vendor: string;
+  systemDisplayName: string;
+}
+
+interface MultiSelectComboboxProps {
   options: { value: string; label: string }[];
-  value: string;
-  onChange: (value: string) => void;
+  values: string[];
+  onChange: (values: string[]) => void;
   placeholder: string;
   lang: string;
 }
 
-function Combobox({
+function MultiSelectCombobox({
   options = [],
-  value,
+  values,
   onChange,
   placeholder,
   lang,
-}: ComboboxProps) {
+}: MultiSelectComboboxProps) {
   const [open, setOpen] = useState(false);
-
   const t = useTranslations(lang);
 
+  const selectedLabels = values.map(value => 
+    options.find(option => option.value === value)?.label || value
+  );
+
+  const handleSelect = (value: string) => {
+    if (values.includes(value)) {
+      onChange(values.filter(v => v !== value));
+    } else {
+      onChange([...values, value]);
+    }
+  };
+
+  const handleRemove = (value: string) => {
+    onChange(values.filter(v => v !== value));
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full md:w-[200px] justify-between"
-        >
-          {value
-            ? options.find((option) => option.value === value)?.label
-            : placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full md:w-[200px] p-0">
-        <Command>
-          <CommandInput placeholder={`${placeholder.toLowerCase()}...`} />
-          <CommandList>
-            <CommandEmpty>{t("no_results")}</CommandEmpty>
-            <CommandGroup>
-              <CommandItem
-                value="all"
-                onSelect={(currentValue) => {
-                  onChange("");
-                  setOpen(false);
-                }}
-                className="cursor-pointer"
-              >
-                <Check
-                  className={`mr-2 h-4 w-4 ${value === "" ? "opacity-100" : "opacity-0"}`}
-                />
-                All
-              </CommandItem>
-              {options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  value={option.value}
-                  onSelect={(currentValue) => {
-                    onChange(currentValue);
-                    setOpen(false);
-                  }}
-                  className="cursor-pointer"
-                >
-                  <Check
-                    className={`mr-2 h-4 w-4 ${value === option.value ? "opacity-100" : "opacity-0"}`}
-                  />
-                  {option.label}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <div className="space-y-2">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between min-h-10"
+          >
+            <span className="truncate">
+              {values.length > 0 ? `${values.length} selected` : placeholder}
+            </span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0" align="start">
+          <Command>
+            <CommandInput placeholder={`Search ${placeholder.toLowerCase()}...`} />
+            <CommandList>
+              <CommandEmpty>{t("no_results")}</CommandEmpty>
+              <CommandGroup>
+                {options.map((option) => (
+                  <CommandItem
+                    key={option.value}
+                    value={option.value}
+                    onSelect={() => handleSelect(option.value)}
+                    className="cursor-pointer"
+                  >
+                    <Check
+                      className={`mr-2 h-4 w-4 ${
+                        values.includes(option.value) ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
+                    {option.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      
+      {/* Selected items as badges */}
+      {values.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {selectedLabels.map((label, index) => (
+            <Badge
+              key={values[index]}
+              variant="secondary"
+              className="text-xs"
+            >
+              {label}
+              <X
+                className="ml-1 h-3 w-3 cursor-pointer hover:text-destructive"
+                onClick={() => handleRemove(values[index])}
+              />
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
 // Status cell component
-const StatusCell = ({
-  status,
-}: {
-  status: string | null;
-  lang: string;
-  boardDir: string;
-  systemDir: string;
-  fileName: string;
-}) => {
-  if (!status) return <span>-</span>;
-
+const StatusCell = ({ status }: { status: string }) => {
   const statusClass = statusClassMap[status] ?? statusClassMap.UNKNOWN;
 
   return (
     <span
-      className={`inline-block px-2 rounded-md font-medium ${statusClass}`}
+      className={`inline-block px-2 py-1 rounded-md font-medium text-xs ${statusClass}`}
     >
       {status}
     </span>
@@ -139,88 +162,129 @@ const StatusCell = ({
 // Main component interface
 interface ReportListProps {
   lang: string;
-  boards: BoardMetaData[];
-  systems: SysMetaData[];
+  reports: EnrichedReport[];
+  systemMetadata: Record<string, string>;
 }
 
 // Main component
-export default function ReportList({ lang, boards, systems }: ReportListProps) {
+export default function ReportList({ lang, reports, systemMetadata }: ReportListProps) {
   const t = useTranslations(lang);
 
-  // State management
+  // State management - changed to arrays for multi-select
   const [sorting, setSorting] = useState<SortingState>([
-    { id: "last_update", desc: true },
+    { id: "last_update", desc: true }, // Default: latest reports first
   ]);
-  const [boardFilter, setBoardFilter] = useState("");
-  const [systemFilter, setSystemFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [cpuFilters, setCpuFilters] = useState<string[]>([]);
+  const [vendorFilters, setVendorFilters] = useState<string[]>([]);
+  const [systemFilters, setSystemFilters] = useState<string[]>([]);
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   // Create column helper
-  const columnHelper = createColumnHelper<SysMetaData>();
+  const columnHelper = createColumnHelper<EnrichedReport>();
 
-  // Build table columns
+  // Build table columns with responsive design
   const columns = useMemo(
     () => [
-      columnHelper.accessor("boardDir", {
-        header: t("board"),
-        cell: (info) => {
-          const boardData = boards.find((b) => b.dir === info.getValue());
-          return boardData ? boardData.product : info.getValue();
-        },
-      }),
-      columnHelper.accessor("sysDir", {
-        header: t("system"),
-        cell: (info) => info.getValue(),
-      }),
-      columnHelper.accessor("sys_ver", {
-        header: t("sys.version"),
-        cell: (info) => info.getValue(),
-      }),
-      columnHelper.accessor("sys_var", {
-        header: t("sys.variant"),
-        cell: (info) => info.getValue(),
-      }),
-
-      columnHelper.accessor("status", {
-        header: t("sys.status"),
+      // Board Product - always visible
+      columnHelper.accessor("boardProduct", {
+        header: "Board",
         cell: (info) => (
-          <StatusCell
-            status={info.getValue()}
-            lang={lang}
-            boardDir={info.row.original.boardDir}
-            systemDir={info.row.original.sysDir?.toString()}
-            fileName={info.row.original.fileName?.toString()}
-          />
+          <div className="font-medium">{info.getValue()}</div>
         ),
       }),
+      // CPU - hidden on mobile
+      columnHelper.accessor("cpu", {
+        header: "CPU",
+        cell: (info) => (
+          <div className="hidden md:block text-sm text-muted-foreground">
+            {info.getValue()}
+          </div>
+        ),
+      }),
+      // Vendor - always visible
+      columnHelper.accessor("vendor", {
+        header: "Vendor",
+        cell: (info) => (
+          <div className="text-sm">{info.getValue()}</div>
+        ),
+      }),
+      // System Display Name - always visible
+      columnHelper.accessor("systemDisplayName", {
+        header: "System",
+        cell: (info) => (
+          <div className="font-medium">{info.getValue()}</div>
+        ),
+      }),
+      // Version - hidden on mobile
+      columnHelper.accessor("sys_ver", {
+        header: "Version",
+        cell: (info) => (
+          <div className="hidden lg:block text-sm text-muted-foreground">
+            {info.getValue() || "-"}
+          </div>
+        ),
+      }),
+      // Variant - hidden on mobile
+      columnHelper.accessor("sys_var", {
+        header: "Variant",
+        cell: (info) => (
+          <div className="hidden lg:block text-sm text-muted-foreground">
+            {info.getValue() || "-"}
+          </div>
+        ),
+      }),
+      // Status - always visible
+      columnHelper.accessor("status", {
+        header: "Status",
+        cell: (info) => <StatusCell status={info.getValue()} />,
+      }),
+      // Last Update - always visible
       columnHelper.accessor("last_update", {
-        header: t("sys.update"),
-        cell: (info) => info.getValue(),
+        header: "Updated",
+        cell: (info) => {
+          const date = info.getValue();
+          return (
+            <div className="text-sm text-muted-foreground">
+              {date ? format(date, "MMM dd, yyyy") : "-"}
+            </div>
+          );
+        },
       }),
     ],
-    [boards, lang],
+    [lang]
   );
 
-  // Prepare table data
-  const data = useMemo(() => {
-    // Apply filters
-    return systems.filter((system) => {
-      // Apply board filter
-      if (boardFilter && system.boardDir !== boardFilter) return false;
+  // Prepare filtered data
+  const filteredData = useMemo(() => {
+    return reports.filter((report) => {
+      // CPU filters - if array is not empty, report.cpu must be in the array
+      if (cpuFilters.length > 0 && !cpuFilters.includes(report.cpu)) return false;
 
-      // Apply system filter
-      if (systemFilter && system.sys !== systemFilter) return false;
+      // Vendor filters
+      if (vendorFilters.length > 0 && !vendorFilters.includes(report.vendor)) return false;
 
-      // Apply status filter
-      if (statusFilter && system.status !== statusFilter) return false;
+      // System filters
+      if (systemFilters.length > 0 && !systemFilters.includes(report.sys)) return false;
+
+      // Status filters
+      if (statusFilters.length > 0 && !statusFilters.includes(report.status)) return false;
+
+      // Date range filter
+      if (dateRange?.from && dateRange?.to && report.last_update) {
+        const reportDate = report.last_update;
+        if (!isWithinInterval(reportDate, { start: dateRange.from, end: dateRange.to })) {
+          return false;
+        }
+      }
 
       return true;
     });
-  }, [systems, boardFilter, systemFilter, statusFilter]);
+  }, [reports, cpuFilters, vendorFilters, systemFilters, statusFilters, dateRange]);
 
   // Create table instance
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     state: {
       sorting,
@@ -228,60 +292,103 @@ export default function ReportList({ lang, boards, systems }: ReportListProps) {
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
   });
 
   // Prepare filter options
-  const boardOptions = useMemo(() => {
-    return boards.map((board) => ({
-      label: board.product,
-      value: board.dir,
-    }));
-  }, [boards]);
+  const cpuOptions = useMemo(() => {
+    const uniqueCpus = [...new Set(reports.map((r) => r.cpu))].sort();
+    return uniqueCpus.map((cpu) => ({ label: cpu, value: cpu }));
+  }, [reports]);
 
+  const vendorOptions = useMemo(() => {
+    const uniqueVendors = [...new Set(reports.map((r) => r.vendor))].sort();
+    return uniqueVendors.map((vendor) => ({ label: vendor, value: vendor }));
+  }, [reports]);
+
+  // Use metadata.yml for system options instead of extracting from reports
   const systemOptions = useMemo(() => {
-    const uniqueSystems = [...new Set(systems.map((sys) => sys.sys))];
-    return uniqueSystems.map((sys) => ({
-      label: sys,
-      value: sys,
+    // Create a flat list of all systems from metadata.yml
+    const systems = Object.entries(systemMetadata)
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    
+    return systems.map((sys) => ({ 
+      label: sys.name, 
+      value: sys.id 
     }));
-  }, [systems]);
+  }, [systemMetadata]);
 
   const statusOptions = useMemo(() => {
-    const uniqueStatuses = [...new Set(systems.map((sys) => sys.status))]
-      .filter(Boolean)
-      .sort();
-    return uniqueStatuses.map((status) => ({
-      label: status,
-      value: status,
-    }));
-  }, [systems]);
+    const uniqueStatuses = [...new Set(reports.map((r) => r.status))].sort();
+    return uniqueStatuses.map((status) => ({ label: status, value: status }));
+  }, [reports]);
+
+  // Check if any filters are active
+  const hasActiveFilters = cpuFilters.length > 0 || vendorFilters.length > 0 || 
+                          systemFilters.length > 0 || statusFilters.length > 0 || dateRange;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Filters */}
-      <div className="flex flex-col md:flex-row justify-center gap-6 mb-6">
-        <Combobox
-          placeholder={t("select_board")}
-          options={boardOptions}
-          value={boardFilter}
-          onChange={setBoardFilter}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <MultiSelectCombobox
+          placeholder="Select CPUs"
+          options={cpuOptions}
+          values={cpuFilters}
+          onChange={setCpuFilters}
           lang={lang}
         />
-        <Combobox
-          placeholder={t("select_system")}
+        <MultiSelectCombobox
+          placeholder="Select Vendors"
+          options={vendorOptions}
+          values={vendorFilters}
+          onChange={setVendorFilters}
+          lang={lang}
+        />
+        <MultiSelectCombobox
+          placeholder="Select Systems"
           options={systemOptions}
-          value={systemFilter}
-          onChange={setSystemFilter}
+          values={systemFilters}
+          onChange={setSystemFilters}
           lang={lang}
         />
-        <Combobox
-          placeholder={t("select_status")}
+        <MultiSelectCombobox
+          placeholder="Select Status"
           options={statusOptions}
-          value={statusFilter}
-          onChange={setStatusFilter}
+          values={statusFilters}
+          onChange={setStatusFilters}
           lang={lang}
         />
+        <DatePickerWithRange
+          date={dateRange}
+          onDateChange={setDateRange}
+          placeholder="Select date range"
+          className="md:col-span-2 lg:col-span-1"
+        />
+      </div>
+
+      {/* Results summary */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Showing {filteredData.length} of {reports.length} test reports
+        </p>
+        
+        {/* Clear filters button */}
+        {hasActiveFilters && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setCpuFilters([]);
+              setVendorFilters([]);
+              setSystemFilters([]);
+              setStatusFilters([]);
+              setDateRange(undefined);
+            }}
+          >
+            Clear Filters
+          </Button>
+        )}
       </div>
 
       {/* Data table */}
@@ -293,17 +400,21 @@ export default function ReportList({ lang, boards, systems }: ReportListProps) {
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className={`${header.column.getCanSort() ? "cursor-pointer select-none" : ""}`}
+                    className={`${
+                      header.column.getCanSort() 
+                        ? "cursor-pointer select-none hover:bg-muted/50" 
+                        : ""
+                    }`}
                     onClick={header.column.getToggleSortingHandler()}
                   >
-                    <div className="flex items-center">
+                    <div className="flex items-center space-x-1">
                       {flexRender(
                         header.column.columnDef.header,
-                        header.getContext(),
+                        header.getContext()
                       )}
                       {{
-                        asc: "↑",
-                        desc: "↓",
+                        asc: <span className="text-primary">↑</span>,
+                        desc: <span className="text-primary">↓</span>,
                       }[header.column.getIsSorted() as string] || null}
                     </div>
                   </TableHead>
@@ -316,22 +427,22 @@ export default function ReportList({ lang, boards, systems }: ReportListProps) {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => {
-                    window.location.href = getRelativeLocaleUrl(
+                    const report = row.original;
+                    const url = getRelativeLocaleUrl(
                       lang,
-                      `board/${row.original.boardDir}/${row.original.sysDir}-${row.original.fileName}`,
-                      {
-                        normalizeLocale: false,
-                      },
+                      `reports/${report.boardId}-${report.sys}-${report.fileName}`,
+                      { normalizeLocale: false }
                     );
+                    window.location.href = url;
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext(),
+                        cell.getContext()
                       )}
                     </TableCell>
                   ))}
@@ -343,7 +454,12 @@ export default function ReportList({ lang, boards, systems }: ReportListProps) {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  {t("no_results")}
+                  <div className="flex flex-col items-center space-y-2">
+                    <p className="text-muted-foreground">No test reports found</p>
+                    <p className="text-sm text-muted-foreground">
+                      Try adjusting your filters
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
