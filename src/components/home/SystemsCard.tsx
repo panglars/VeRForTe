@@ -11,7 +11,7 @@ interface Props {
   lang: keyof typeof ui;
 }
 
-const SystemsGrid: React.FC<Props> = ({ systems, lang }) => {
+const SystemsCard: React.FC<Props> = ({ systems, lang }) => {
   const t = useTranslations(lang);
 
   // Create a unique list of systems based on sysDir
@@ -43,4 +43,4 @@ const SystemsGrid: React.FC<Props> = ({ systems, lang }) => {
   );
 };
 
-export default SystemsGrid;
+export default SystemsCard;

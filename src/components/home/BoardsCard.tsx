@@ -18,7 +18,7 @@ interface Props {
   lang: keyof typeof ui;
 }
 
-const BoardsGrid: React.FC<Props> = ({ boards, deviceNames, lang }) => {
+const BoardsCard: React.FC<Props> = ({ boards, deviceNames, lang }) => {
   const t = useTranslations(lang);
 
   return (
@@ -70,4 +70,4 @@ const BoardsGrid: React.FC<Props> = ({ boards, deviceNames, lang }) => {
   );
 };
 
-export default BoardsGrid;
+export default BoardsCard;

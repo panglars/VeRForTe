@@ -3,13 +3,13 @@ import SortDropdown from "./SortDropdown";
 import type { SortOption } from "./SortDropdown";
 import { Input } from "./ui/input";
 import { Search as SearchIcon } from "lucide-react";
-import BoardsGrid from "./boards/BoardsGrid";
-import SystemsGrid from "./systems/SystemsGrid";
 import { useTranslations } from "@/i18n/utils";
 import { getRuyiDeviceVendor } from "@/lib/package-index";
 import type { BoardMetaData, SysMetaData } from "@/lib/data";
 import { ui } from "@/i18n/ui";
 import { Button } from "./ui/button";
+import BoardsCard from "./home/BoardsCard";
+import SystemsCard from "./home/SystemsCard";
 
 interface Props {
   boards: BoardMetaData[];
@@ -246,7 +246,7 @@ const Overview: React.FC<Props> = ({
       )}
 
       {hasResults && view === "boards" && (
-        <BoardsGrid
+        <BoardsCard
           boards={visibleBoards}
           deviceNames={deviceNames}
           lang={lang}
@@ -254,7 +254,7 @@ const Overview: React.FC<Props> = ({
       )}
 
       {hasResults && view === "systems" && (
-        <SystemsGrid systems={visibleSystems} lang={lang} />
+        <SystemsCard systems={visibleSystems} lang={lang} />
       )}
     </div>
   );
