@@ -1,7 +1,7 @@
 ---
 import { getAllSysData } from "@/lib/data";
 import Layout from "@/layouts/Layout.astro";
-import BoardsList from "@/components/systems/BoardsList.astro";
+import BoardsList from "@/components/details/BoardsList.astro";
 
 export async function getStaticPaths() {
   const sysData = await getAllSysData();

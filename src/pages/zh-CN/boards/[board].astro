@@ -2,7 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import { getAllBoardsData, getBoardData, getBoardSysDirs } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import SystemList from "@/components/boards/SystemsList.astro";
+import SystemsList from "@/components/details/SystemsList.astro";
 
 // Generate static paths for all boards
 export async function getStaticPaths() {
@@ -78,7 +78,7 @@ try {
             </CardContent>
           </Card>
 
-          <SystemList boardDir={boardDir} osList={osList} />
+          <SystemsList boardDir={boardDir} osList={osList} />
 
           <div class="mt-8">
             <p class="text-sm text-muted-foreground">
