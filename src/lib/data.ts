@@ -1,25 +1,49 @@
 import YAML from "yaml";
+import type { ReportStatus } from "@/config/site";
 
 // Interface for board meta data
+// https://github.com/ruyisdk/support-matrix/blob/main/report-template/%5Bboard-name%5D/README.md
 export interface BoardMetaData {
-  vendor: string;
-  product: string;
-  cpu: string;
-  cpu_core: string;
-  ram: string;
-  dir: string;
+  vendor: string; // Board manufacturer
+  product: string; // Board name
+  cpu: string; // CPU Model
+  cpu_core: string; // CPU core
+  ram: string; // Memory and flash information
+  dir: string; // Unique ID for this board
 }
 
 // Interface for system data
-export interface SysMetaData {
-  sys: string;
-  sys_ver: string | null;
-  sys_var: string | null;
-  status: string;
-  last_update: string | null;
-  sysDir: string | null;
-  boardDir: string;
-  fileName: string | null;
+// https://github.com/ruyisdk/support-matrix/blob/main/report-template/%5Bboard-name%5D/%5Bos-name%5D/README.md
+export interface ReportMetaData {
+  sys: string; // OS identifier
+  sys_ver: string | null; // OS version
+  sys_var: string | null; // Variant identifier
+  status: ReportStatus; // Support Status
+  last_update: Date | null; // Last Update Date
+  boardId: string; // The board's 'dir'
+  sourceType: "report" | "other"; // A flag to distinguish the source
+  fileName: string | null; // The original .md file name, for variant system
+}
+
+// For a single Board
+export interface Board {
+  id: string; // The unique ID, same as meta.dir
+  meta: BoardMetaData;
+  systems: Map<string, ReportMetaData[]>; // All reports for this board, grouped by system name
+}
+
+// For a single OS
+export interface System {
+  id: string; // The unique system name, e.g., 'ubuntu'
+  name: string; // The display name, e.g., 'Ubuntu'
+  reports: ReportMetaData[]; // All reports for this system across all boards
+}
+
+// The final data object that your `data.ts` will export
+export interface SiteData {
+  boards: Map<string, Board>;
+  systems: Map<string, System>;
+  allReports: ReportMetaData[]; // A flat list of all reports
 }
 
 // Import all README.md files from support-matrix at build time

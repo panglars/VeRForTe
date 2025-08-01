@@ -10,6 +10,8 @@ export const siteConfig = {
 
 export type SiteConfig = typeof siteConfig;
 
+export type ReportStatus = "GOOD" | "BASIC" | "CFH" | "CFI" | "CFT" | "WIP";
+
 export const META_THEME_COLORS = {
   light: "#ffffff",
   dark: "#09090b",
