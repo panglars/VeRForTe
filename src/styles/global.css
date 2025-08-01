@@ -177,6 +177,33 @@
 
 body {
     letter-spacing: var(--tracking-normal);
+    position: relative;
+}
+
+body::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 300px;
+    background: radial-gradient(
+        circle,
+        oklch(0.3176 0.0981 253.0501 / 0.1) 0%,
+        oklch(0.8197 0.167 79.1074 / 0.05) 50%,
+        transparent 70%
+    );
+    z-index: -1;
+    pointer-events: none;
+}
+
+.dark body::before {
+    background: radial-gradient(
+        circle,
+        oklch(0.8197 0.167 79.1074 / 0.08) 0%,
+        oklch(0.3176 0.0981 253.0501 / 0.04) 50%,
+        transparent 70%
+    );
 }
 
 @layer base {

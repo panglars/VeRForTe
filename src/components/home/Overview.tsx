@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import SortDropdown from "./SortDropdown";
 import type { SortOption } from "./SortDropdown";
-import { Input } from "./ui/input";
+import { Input } from "../ui/input";
 import { Search as SearchIcon } from "lucide-react";
 import { useTranslations } from "@/i18n/utils";
 import { getRuyiDeviceVendor } from "@/lib/package-index";
 import type { BoardMetaData, SysMetaData } from "@/lib/data";
 import { ui } from "@/i18n/ui";
-import { Button } from "./ui/button";
-import BoardsCard from "./home/BoardsCard";
-import SystemsCard from "./home/SystemsCard";
+import { Button } from "../ui/button";
+import BoardsCard from "./BoardsCard";
+import SystemsCard from "./SystemsCard";
 
 interface Props {
   boards: BoardMetaData[];

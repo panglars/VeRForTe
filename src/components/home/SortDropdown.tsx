@@ -4,8 +4,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { Button } from "./ui/button";
+} from "../ui/dropdown-menu";
+import { Button } from "../ui/button";
 import { ArrowDownWideNarrow, ChevronDown } from "lucide-react";
 
 export interface SortOption {
