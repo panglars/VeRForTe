@@ -1,17 +1,53 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import { getAllBoardsData, getAllSysData } from "@/lib/data";
+import { getSiteData } from "@/lib/data";
+import { loadSystemMetadata } from "@/lib/utils";
 import { getLangFromUrl } from "@/i18n/utils";
 import ReportList from "@/components/ReportList";
 
-const boards = await getAllBoardsData();
-const systems = await getAllSysData();
+// Load all site data using the new caching system
+const siteData = await getSiteData();
+const { allReports, boards, systems } = siteData;
+
+// Load system metadata for combobox options
+const systemMetadata = await loadSystemMetadata();
+
+// Filter to only show reports with actual test reports (sourceType: "report")
+const testReports = allReports.filter(report => report.sourceType === "report");
+
+// Enrich reports with board and system information
+const enrichedReports = testReports.map(report => {
+  const boardData = boards.get(report.boardId);
+  const systemData = systems.get(report.sys);
+  
+  return {
+    ...report,
+    boardData,
+    systemDisplayName: systemData?.name || report.sys,
+    // Ensure all reports have the required fields
+    boardProduct: boardData?.meta.product || "Unknown Board",
+    cpu: boardData?.meta.cpu || "Unknown CPU",
+    vendor: boardData?.meta.vendor || "Unknown Vendor",
+  };
+});
 
 const lang = getLangFromUrl(Astro.url);
 ---
 
 <Layout title="测试报告列表">
   <div class="container mx-auto py-6">
-    <ReportList client:load boards={boards} systems={systems} lang={lang} />
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold tracking-tight">测试报告</h1>
+      <p class="text-muted-foreground">
+        浏览所有 RISC-V 开发板和系统的测试报告
+      </p>
+    </div>
+    
+    <ReportList 
+      client:load 
+      reports={enrichedReports}
+      systemMetadata={systemMetadata}
+      lang={lang}
+    />
   </div>
 </Layout>

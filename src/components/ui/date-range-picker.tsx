@@ -31,25 +31,27 @@ export function DatePickerWithRange({
         <PopoverTrigger asChild>
           <Button
             id="date"
-            variant={"outline"}
+            variant="outline"
             className={cn(
-              "w-full md:w-[300px] justify-start text-left font-normal",
+              "w-full justify-between min-h-10 font-normal",
               !date && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, "LLL dd, y")} -{" "}
-                  {format(date.to, "LLL dd, y")}
-                </>
+            <span className="truncate">
+              {date?.from ? (
+                date.to ? (
+                  <>
+                    {format(date.from, "LLL dd, y")} -{" "}
+                    {format(date.to, "LLL dd, y")}
+                  </>
+                ) : (
+                  format(date.from, "LLL dd, y")
+                )
               ) : (
-                format(date.from, "LLL dd, y")
-              )
-            ) : (
-              <span>{placeholder}</span>
-            )}
+                placeholder
+              )}
+            </span>
+            <CalendarIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
