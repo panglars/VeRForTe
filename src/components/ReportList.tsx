@@ -128,9 +128,7 @@ const StatusCell = ({
   const statusClass = statusClassMap[status] ?? statusClassMap.UNKNOWN;
 
   return (
-    <span
-      className={`inline-block px-2 rounded-md font-medium ${statusClass}`}
-    >
+    <span className={`inline-block px-2 rounded-md font-medium ${statusClass}`}>
       {status}
     </span>
   );
@@ -320,7 +318,7 @@ export default function ReportList({ lang, boards, systems }: ReportListProps) {
                   onClick={() => {
                     window.location.href = getRelativeLocaleUrl(
                       lang,
-                      `board/${row.original.boardDir}/${row.original.sysDir}-${row.original.fileName}`,
+                      `reports/${row.original.boardDir}-${row.original.sysDir}-${row.original.fileName}`,
                       {
                         normalizeLocale: false,
                       },
