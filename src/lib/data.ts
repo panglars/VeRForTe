@@ -20,7 +20,7 @@ export interface ReportMetaData {
   sys_ver: string | null; // OS version
   sys_var: string | null; // Variant identifier
   status: ReportStatus; // Support Status
-  last_update: Date | null; // Last Update Date
+  last_update: Date; // Last Update or commit date
   boardId: string; // The board's 'dir'
   sourceType: "report" | "other"; // A flag to distinguish the source
   fileName: string | null; // The original .md file name, for variant system
@@ -62,8 +62,8 @@ export interface SiteData {
 // Internal data processing interfaces
 interface RawDataCollection {
   boardsData: BoardMetaData[];
-  markdownReports: Omit<ReportMetaData, 'sourceType'>[];
-  othersReports: Omit<ReportMetaData, 'sourceType'>[];
+  markdownReports: Omit<ReportMetaData, "sourceType">[];
+  othersReports: Omit<ReportMetaData, "sourceType">[];
   systemMetadata: Record<string, string>;
 }
 
@@ -112,7 +112,7 @@ export async function getSiteData(): Promise<SiteData> {
 
   // Start loading data
   loadingPromise = loadSiteData();
-  
+
   try {
     siteDataCache = await loadingPromise;
     return siteDataCache;
@@ -156,13 +156,13 @@ async function loadSiteData(): Promise<SiteData> {
   try {
     // Phase 1: Load raw data from all sources
     const rawData = await loadRawData();
-    
+
     // Phase 2: Process, validate and aggregate data
     const processedData = await processAndValidate(rawData);
-    
+
     // Phase 3: Build statistics and final data structure
     const siteData = await buildStatisticsAndIndexes(processedData);
-    
+
     return siteData;
   } catch (error) {
     console.error("Error loading site data:", error);
@@ -174,12 +174,13 @@ async function loadSiteData(): Promise<SiteData> {
  * Phase 1: Load raw data from all sources
  */
 async function loadRawData(): Promise<RawDataCollection> {
-  const [boardsData, markdownReports, othersReports, systemMetadata] = await Promise.all([
-    loadBoardsData(),
-    loadReportsFromMarkdown(),
-    loadReportsFromOthersYml(),
-    loadSystemMetadata(),
-  ]);
+  const [boardsData, markdownReports, othersReports, systemMetadata] =
+    await Promise.all([
+      loadBoardsData(),
+      loadReportsFromMarkdown(),
+      loadReportsFromOthersYml(),
+      loadSystemMetadata(),
+    ]);
 
   return {
     boardsData,
@@ -192,15 +193,20 @@ async function loadRawData(): Promise<RawDataCollection> {
 /**
  * Phase 2: Process, validate and aggregate data
  */
-async function processAndValidate(raw: RawDataCollection): Promise<ProcessedData> {
+async function processAndValidate(
+  raw: RawDataCollection,
+): Promise<ProcessedData> {
   // Combine reports and add source type
   const allReports: ReportMetaData[] = [
-    ...raw.markdownReports.map(r => ({ ...r, sourceType: "report" as const })),
-    ...raw.othersReports.map(r => ({ ...r, sourceType: "other" as const })),
+    ...raw.markdownReports.map((r) => ({
+      ...r,
+      sourceType: "report" as const,
+    })),
+    ...raw.othersReports.map((r) => ({ ...r, sourceType: "other" as const })),
   ];
 
   // Validate reports
-  const validReports = allReports.filter(report => {
+  const validReports = allReports.filter((report) => {
     const isValid = validateReportData(report);
     if (!isValid) {
       console.warn("Invalid report data:", report);
@@ -223,7 +229,9 @@ async function processAndValidate(raw: RawDataCollection): Promise<ProcessedData
 /**
  * Phase 3: Build statistics and final data structure
  */
-async function buildStatisticsAndIndexes(data: ProcessedData): Promise<SiteData> {
+async function buildStatisticsAndIndexes(
+  data: ProcessedData,
+): Promise<SiteData> {
   const statistics = computeStatistics(data.allReports, data.boards);
 
   return {
@@ -236,35 +244,38 @@ async function buildStatisticsAndIndexes(data: ProcessedData): Promise<SiteData>
  * Load all board metadata from README.md files
  */
 async function loadBoardsData(): Promise<BoardMetaData[]> {
-  const boardPromises = Object.entries(boardReadmeFiles).map(async ([path, importFn]) => {
-    const match = path.match(/\/support-matrix\/([^\/]+)\/README\.md$/);
-    if (!match) return null;
+  const boardPromises = Object.entries(boardReadmeFiles).map(
+    async ([path, importFn]) => {
+      const match = path.match(/\/support-matrix\/([^\/]+)\/README\.md$/);
+      if (!match) return null;
 
-    const boardDir = match[1];
-    if (["assets", ".github", "report-template"].includes(boardDir)) return null;
+      const boardDir = match[1];
+      if (["assets", ".github", "report-template"].includes(boardDir))
+        return null;
 
-    try {
-      const content = (await importFn()) as string;
-      const frontmatter = extractFrontmatter(content);
-      
-      if (!frontmatter || !frontmatter.vendor) {
-        console.warn(`Invalid frontmatter for board ${boardDir}`);
+      try {
+        const content = (await importFn()) as string;
+        const frontmatter = extractFrontmatter(content);
+
+        if (!frontmatter || !frontmatter.vendor) {
+          console.warn(`Invalid frontmatter for board ${boardDir}`);
+          return null;
+        }
+
+        return {
+          vendor: frontmatter.vendor,
+          product: frontmatter.product || "Not specified",
+          cpu: frontmatter.cpu || "Not specified",
+          cpu_core: frontmatter.cpu_core || "Not specified",
+          ram: frontmatter.ram || "Not specified",
+          dir: boardDir,
+        };
+      } catch (error) {
+        console.error(`Error loading board data for ${boardDir}:`, error);
         return null;
       }
-
-      return {
-        vendor: frontmatter.vendor,
-        product: frontmatter.product || "Not specified",
-        cpu: frontmatter.cpu || "Not specified",
-        cpu_core: frontmatter.cpu_core || "Not specified",
-        ram: frontmatter.ram || "Not specified",
-        dir: boardDir,
-      };
-    } catch (error) {
-      console.error(`Error loading board data for ${boardDir}:`, error);
-      return null;
-    }
-  });
+    },
+  );
 
   const boardsData = await Promise.all(boardPromises);
   return boardsData.filter((board): board is BoardMetaData => board !== null);
@@ -273,83 +284,98 @@ async function loadBoardsData(): Promise<BoardMetaData[]> {
 /**
  * Load reports from markdown files
  */
-async function loadReportsFromMarkdown(): Promise<Omit<ReportMetaData, 'sourceType'>[]> {
-  const reportPromises = Object.entries(systemMarkdownFiles).map(async ([path, importFn]) => {
-    const match = path.match(/\/support-matrix\/([^\/]+)\/([^\/]+)\/([^\/]+)\.md$/);
-    if (!match) return null;
+async function loadReportsFromMarkdown(): Promise<
+  Omit<ReportMetaData, "sourceType">[]
+> {
+  const reportPromises = Object.entries(systemMarkdownFiles).map(
+    async ([path, importFn]) => {
+      const match = path.match(
+        /\/support-matrix\/([^\/]+)\/([^\/]+)\/([^\/]+)\.md$/,
+      );
+      if (!match) return null;
 
-    const [, boardId, sysDir, fileName] = match;
-    
-    // Skip excluded directories
-    if (["assets", ".github", "report-template"].includes(boardId)) return null;
-    
-    // Skip Chinese translations
-    if (fileName.endsWith("_zh")) return null;
+      const [, boardId, sysDir, fileName] = match;
 
-    try {
-      const content = (await importFn()) as string;
-      const frontmatter = extractFrontmatter(content);
-      
-      if (!frontmatter || !frontmatter.sys || !frontmatter.status) {
-        console.warn(`Invalid frontmatter for ${path}`);
+      // Skip excluded directories
+      if (["assets", ".github", "report-template"].includes(boardId))
+        return null;
+
+      // Skip Chinese translations
+      if (fileName.endsWith("_zh")) return null;
+
+      try {
+        const content = (await importFn()) as string;
+        const frontmatter = extractFrontmatter(content);
+
+        if (!frontmatter || !frontmatter.sys || !frontmatter.status) {
+          console.warn(`Invalid frontmatter for ${path}`);
+          return null;
+        }
+
+        return {
+          sys: frontmatter.sys,
+          sys_ver: frontmatter.sys_ver || null,
+          sys_var: frontmatter.sys_var || null,
+          status: frontmatter.status.toUpperCase() as ReportStatus,
+          last_update: frontmatter.last_update
+            ? new Date(frontmatter.last_update)
+            : null,
+          boardId,
+          fileName,
+        };
+      } catch (error) {
+        console.error(`Error loading report from ${path}:`, error);
         return null;
       }
-
-      return {
-        sys: frontmatter.sys,
-        sys_ver: frontmatter.sys_ver || null,
-        sys_var: frontmatter.sys_var || null,
-        status: frontmatter.status.toUpperCase() as ReportStatus,
-        last_update: frontmatter.last_update ? new Date(frontmatter.last_update) : null,
-        boardId,
-        fileName,
-      };
-    } catch (error) {
-      console.error(`Error loading report from ${path}:`, error);
-      return null;
-    }
-  });
+    },
+  );
 
   const reports = await Promise.all(reportPromises);
-  return reports.filter((report): report is Omit<ReportMetaData, 'sourceType'> => report !== null);
+  return reports.filter(
+    (report): report is Omit<ReportMetaData, "sourceType"> => report !== null,
+  );
 }
 
 /**
  * Load reports from others.yml files
  */
-async function loadReportsFromOthersYml(): Promise<Omit<ReportMetaData, 'sourceType'>[]> {
-  const othersPromises = Object.entries(othersYmlFiles).map(async ([path, importFn]) => {
-    const match = path.match(/\/support-matrix\/([^\/]+)\/others\.yml$/);
-    if (!match) return [];
+async function loadReportsFromOthersYml(): Promise<
+  Omit<ReportMetaData, "sourceType">[]
+> {
+  const othersPromises = Object.entries(othersYmlFiles).map(
+    async ([path, importFn]) => {
+      const match = path.match(/\/support-matrix\/([^\/]+)\/others\.yml$/);
+      if (!match) return [];
 
-    const boardId = match[1];
-    
-    // Skip excluded directories
-    if (["assets", ".github", "report-template"].includes(boardId)) return [];
+      const boardId = match[1];
 
-    try {
-      const content = (await importFn()) as string;
-      const parsedData = YAML.parse(content);
+      // Skip excluded directories
+      if (["assets", ".github", "report-template"].includes(boardId)) return [];
 
-      if (!Array.isArray(parsedData)) {
-        console.warn(`Invalid YAML format in ${path}`);
+      try {
+        const content = (await importFn()) as string;
+        const parsedData = YAML.parse(content);
+
+        if (!Array.isArray(parsedData)) {
+          console.warn(`Invalid YAML format in ${path}`);
+          return [];
+        }
+
+        return parsedData.map((item: any) => ({
+          sys: item.sys,
+          sys_ver: item.sys_ver || null,
+          sys_var: item.sys_var || null,
+          status: item.status.toUpperCase() as ReportStatus,
+          last_update: null,
+          boardId,
+          fileName: null,
+        }));
+      } catch (error) {
+        console.error(`Error loading others.yml from ${path}:`, error);
         return [];
       }
-
-      return parsedData.map((item: any) => ({
-        sys: item.sys,
-        sys_ver: item.sys_ver || null,
-        sys_var: item.sys_var || null,
-        status: item.status.toUpperCase() as ReportStatus,
-        last_update: null,
-        boardId,
-        fileName: null,
-      }));
-    } catch (error) {
-      console.error(`Error loading others.yml from ${path}:`, error);
-      return [];
-    }
-  });
+    },
+  );
 
   const othersArrays = await Promise.all(othersPromises);
   return othersArrays.flat();
@@ -358,7 +384,10 @@ async function loadReportsFromOthersYml(): Promise<Omit<ReportMetaData, 'sourceT
 /**
  * Aggregate reports into boards structure
  */
-function aggregateToBoards(reports: ReportMetaData[], boardsData: BoardMetaData[]): Map<string, Board> {
+function aggregateToBoards(
+  reports: ReportMetaData[],
+  boardsData: BoardMetaData[],
+): Map<string, Board> {
   const boardsMap = new Map<string, Board>();
 
   // Initialize boards from metadata
@@ -390,7 +419,10 @@ function aggregateToBoards(reports: ReportMetaData[], boardsData: BoardMetaData[
 /**
  * Aggregate reports into systems structure
  */
-function aggregateToSystems(reports: ReportMetaData[], systemMetadata: Record<string, string>): Map<string, System> {
+function aggregateToSystems(
+  reports: ReportMetaData[],
+  systemMetadata: Record<string, string>,
+): Map<string, System> {
   const systemsMap = new Map<string, System>();
 
   for (const report of reports) {
@@ -410,25 +442,34 @@ function aggregateToSystems(reports: ReportMetaData[], systemMetadata: Record<st
 /**
  * Compute site-wide statistics
  */
-function computeStatistics(reports: ReportMetaData[], boards: Map<string, Board>): SiteStatistics {
+function computeStatistics(
+  reports: ReportMetaData[],
+  boards: Map<string, Board>,
+): SiteStatistics {
   // Status counts
-  const statusCounts = reports.reduce((acc, report) => {
-    acc[report.status] = (acc[report.status] || 0) + 1;
-    return acc;
-  }, {} as Record<ReportStatus, number>);
+  const statusCounts = reports.reduce(
+    (acc, report) => {
+      acc[report.status] = (acc[report.status] || 0) + 1;
+      return acc;
+    },
+    {} as Record<ReportStatus, number>,
+  );
 
   // Systems by category (would need metadata.yml structure for proper categorization)
   const systemsByCategory: Record<string, string[]> = {};
-  const uniqueSystems = new Set(reports.map(r => r.sys));
+  const uniqueSystems = new Set(reports.map((r) => r.sys));
   systemsByCategory["all"] = Array.from(uniqueSystems);
 
   // Boards by vendor
-  const boardsByVendor = Array.from(boards.values()).reduce((acc, board) => {
-    const vendor = board.meta.vendor;
-    if (!acc[vendor]) acc[vendor] = [];
-    acc[vendor].push(board.id);
-    return acc;
-  }, {} as Record<string, string[]>);
+  const boardsByVendor = Array.from(boards.values()).reduce(
+    (acc, board) => {
+      const vendor = board.meta.vendor;
+      if (!acc[vendor]) acc[vendor] = [];
+      acc[vendor].push(board.id);
+      return acc;
+    },
+    {} as Record<string, string[]>,
+  );
 
   return {
     totalBoards: boards.size,
@@ -445,16 +486,23 @@ function computeStatistics(reports: ReportMetaData[], boards: Map<string, Board>
  * Validate individual report data
  */
 function validateReportData(report: ReportMetaData): boolean {
-  const validStatuses: ReportStatus[] = ["GOOD", "BASIC", "CFH", "CFT", "WIP", "CFI"];
-  
+  const validStatuses: ReportStatus[] = [
+    "GOOD",
+    "BASIC",
+    "CFH",
+    "CFT",
+    "WIP",
+    "CFI",
+  ];
+
   if (!report.sys || !report.boardId || !report.status) {
     return false;
   }
-  
+
   if (!validStatuses.includes(report.status)) {
     return false;
   }
-  
+
   return true;
 }
 
@@ -465,7 +513,7 @@ function validateDataConsistency(data: ProcessedData): void {
   const issues: string[] = [];
 
   // Check for orphaned reports
-  data.allReports.forEach(report => {
+  data.allReports.forEach((report) => {
     if (!data.boards.has(report.boardId)) {
       issues.push(`Report references non-existent board: ${report.boardId}`);
     }
@@ -474,10 +522,14 @@ function validateDataConsistency(data: ProcessedData): void {
   // Check system report consistency
   data.systems.forEach((system, systemId) => {
     const systemReportCount = system.reports.length;
-    const actualReportCount = data.allReports.filter(r => r.sys === systemId).length;
-    
+    const actualReportCount = data.allReports.filter(
+      (r) => r.sys === systemId,
+    ).length;
+
     if (systemReportCount !== actualReportCount) {
-      issues.push(`System ${systemId} has inconsistent report count: ${systemReportCount} vs ${actualReportCount}`);
+      issues.push(
+        `System ${systemId} has inconsistent report count: ${systemReportCount} vs ${actualReportCount}`,
+      );
     }
   });
 
@@ -495,14 +547,14 @@ function extractFrontmatter(content: string): Record<string, any> | null {
 
   try {
     const frontmatter = YAML.parse(frontmatterMatch[1]);
-    
+
     // Convert empty strings to null
     for (const key in frontmatter) {
       if (frontmatter[key] === "") {
         frontmatter[key] = null;
       }
     }
-    
+
     return frontmatter;
   } catch (error) {
     console.error("Error parsing frontmatter YAML:", error);
@@ -521,7 +573,7 @@ if (import.meta.env.DEV) {
     _loadSiteData: loadSiteData,
     _extractFrontmatter: extractFrontmatter,
   };
-  
+
   console.log("🔧 VeRForTe Debug Tools Available:");
   console.log("  - __verforte_debug.getSiteData()");
   console.log("  - __verforte_debug.clearDataCache()");
