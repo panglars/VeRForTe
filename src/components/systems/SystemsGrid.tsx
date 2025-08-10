@@ -20,7 +20,7 @@ const SystemsGrid: React.FC<Props> = ({ systems, lang }) => {
   );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {uniqueSystems.map((sys) => (
         <div key={sys.sysDir} className="system-card">
           <a
@@ -28,8 +28,8 @@ const SystemsGrid: React.FC<Props> = ({ systems, lang }) => {
               normalizeLocale: false,
             })}
           >
-            <Card className="h-40 flex flex-col justify-center p-6 transition-transform duration-200 hover:bg-muted hover:shadow-lg hover:translate-y-[-0.25rem]">
-              <CardTitle className="text-xl font-semibold mb-2">
+            <Card className="flex flex-col justify-center p-6 transition-transform duration-200 hover:bg-muted hover:shadow-lg hover:translate-y-[-0.25rem]">
+              <CardTitle className="text-xl font-semibold mb-2 text-center">
                 {sys.sysDir}
               </CardTitle>
               <p className="text-sm text-muted-foreground">
