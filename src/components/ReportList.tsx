@@ -33,8 +33,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import type { ReportMetaData } from "@/lib/data";
-import { getRelativeLocaleUrl } from "astro:i18n";
-import { useTranslations } from "@/i18n/utils";
+import { useTranslations, getRelativeUrl, type LocaleCode } from "@/i18n/utils";
 import { statusClassMap } from "@/config/site";
 import { format, isWithinInterval } from "date-fns";
 import type { DateRange } from "react-day-picker";
@@ -52,7 +51,7 @@ interface MultiSelectComboboxProps {
   values: string[];
   onChange: (values: string[]) => void;
   placeholder: string;
-  lang: string;
+  lang: LocaleCode;
 }
 
 function MultiSelectCombobox({
@@ -177,7 +176,7 @@ const StatusCell = ({ status }: { status: string }) => {
 
 // Main component interface
 interface ReportListProps {
-  lang: string;
+  lang: LocaleCode;
   reports: EnrichedReport[];
   systemMetadata: Record<string, string>;
 }
@@ -489,10 +488,9 @@ export default function ReportList({
                   className="cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => {
                     const report = row.original;
-                    const url = getRelativeLocaleUrl(
+                    const url = getRelativeUrl(
                       lang,
                       `reports/${report.boardId}-${report.sys}-${report.fileName}`,
-                      { normalizeLocale: false },
                     );
                     window.location.href = url;
                   }}

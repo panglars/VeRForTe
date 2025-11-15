@@ -12,41 +12,41 @@ import sitemap from "@astrojs/sitemap";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://matrix.ruyisdk.org",
+    site: "https://matrix.ruyisdk.org",
 
-  integrations: [
-    react(),
-    sitemap({
-      i18n: {
-        defaultLocale: "en",
-        locales: {
-          en: "en-US",
-          "zh-CN": "zh-CN",
-        },
-      },
-    }),
-  ],
-
-  i18n: {
-    locales: ["en", "zh-CN"],
-    defaultLocale: "en",
-  },
-
-  vite: {
-    plugins: [tailwindcss()],
-  },
-
-  markdown: {
-    shikiConfig: {
-      theme: "one-dark-pro",
-      langAlias: {
-        "u-boot": "log",
-      },
-    },
-    remarkPlugins: [remarkGfm],
-    rehypePlugins: [
-      [rehypeAutolinkHeadings, { behavior: "wrap" }],
-      rehypeGithubAlert,
+    integrations: [
+        react(),
+        sitemap({
+            i18n: {
+                defaultLocale: "en",
+                locales: {
+                    en: "en-US",
+                    "zh-CN": "zh-CN",
+                },
+            },
+        }),
     ],
-  },
+
+    i18n: {
+        locales: ["en", "zh-CN"],
+        defaultLocale: "en",
+    },
+
+    vite: {
+        plugins: [tailwindcss()],
+    },
+
+    markdown: {
+        shikiConfig: {
+            theme: "one-dark-pro",
+            langAlias: {
+                "u-boot": "log",
+            },
+        },
+        remarkPlugins: [remarkGfm],
+        rehypePlugins: [
+            [rehypeAutolinkHeadings, { behavior: "wrap" }],
+            rehypeGithubAlert,
+        ],
+    },
 });

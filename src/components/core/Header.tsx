@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./ModeToggle";
 import { LangToggle } from "./LangToggle";
 import SidebarToggle from "./SidebarToggle";
-import { useTranslations } from "@/i18n/utils";
-import { getRelativeLocaleUrl } from "astro:i18n";
+import { useTranslations, getRelativeUrl } from "@/i18n/utils";
 
 interface HeaderProps {
   siteConfig: {
@@ -42,9 +41,7 @@ const Header: React.FC<HeaderProps> = ({
           {/* Left side: Logo and Internal Navigation */}
           <div className="flex items-center space-x-8">
             <a
-              href={getRelativeLocaleUrl(lang, "", {
-                normalizeLocale: false,
-              })}
+              href={getRelativeUrl(lang, "")}
               className="text-xl font-bold flex items-center gap-3"
             >
               <img src="/favicon.svg" alt="Logo" className="h-8 w-8" />
@@ -55,9 +52,7 @@ const Header: React.FC<HeaderProps> = ({
               {navigation.map((item) => (
                 <a
                   key={item.href}
-                  href={getRelativeLocaleUrl(lang, item.href, {
-                    normalizeLocale: false,
-                  })}
+                  href={getRelativeUrl(lang, item.href)}
                   className="text-base hover:text-primary transition-colors"
                 >
                   {t(item.label)}

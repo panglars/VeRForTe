@@ -3,8 +3,7 @@ import { Github, Menu, X, ExternalLink, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./ModeToggle";
 import { LangToggle } from "./LangToggle";
-import { useTranslations } from "@/i18n/utils";
-import { getRelativeLocaleUrl } from "astro:i18n";
+import { useTranslations, getRelativeUrl } from "@/i18n/utils";
 
 interface SidebarToggleProps {
   navigation: {
@@ -97,9 +96,7 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({
           {/* Sidebar Header */}
           <div className="flex items-center justify-between p-4 border-b">
             <a
-              href={getRelativeLocaleUrl(lang, "/", {
-                normalizeLocale: false,
-              })}
+              href={getRelativeUrl(lang, "/")}
               className="text-lg font-semibold hover:text-primary transition-colors flex items-center gap-3"
               onClick={closeSidebar}
             >
@@ -121,15 +118,10 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({
           <div className="flex-1 overflow-y-auto">
             {/* Internal Navigation Links */}
             <nav className="p-4 space-y-1">
-              <div className="text-sm font-medium text-muted-foreground mb-3 px-3">
-                {t("navigation")}
-              </div>
               {navigation.map((item) => (
                 <a
                   key={item.href}
-                  href={getRelativeLocaleUrl(lang, item.href, {
-                    normalizeLocale: false,
-                  })}
+                  href={getRelativeUrl(lang, item.href)}
                   className="block text-base py-3 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
                   onClick={closeSidebar}
                 >
@@ -141,9 +133,6 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({
             {/* External Links */}
             {externalLinks.length > 0 && (
               <nav className="px-4 pb-4 space-y-1 border-t">
-                <div className="text-sm font-medium text-muted-foreground mb-3 mt-4 px-3">
-                  {t("external_links")}
-                </div>
                 {externalLinks.map((link) => (
                   <a
                     key={link.href}
