@@ -1,22 +1,101 @@
 ---
-import { getAllSysData } from "@/lib/data";
 import Layout from "@/layouts/Layout.astro";
 import BoardsList from "@/components/details/BoardsList.astro";
+import type { SystemBoardSummary } from "@/components/details/types";
+import type { System } from "@/lib/data";
+import { getSiteData } from "@/lib/data";
+
+interface SystemPageData {
+  system: System | null;
+  boards: SystemBoardSummary[];
+  error: string | null;
+}
 
 export async function getStaticPaths() {
-  const sysData = await getAllSysData();
+  const siteData = await getSiteData();
 
-  return sysData.map((system) => ({
-    params: { system: system.sysDir },
+  return Array.from(siteData.systems.values()).map((system) => ({
+    params: { system: system.id },
   }));
 }
 
-const { system } = Astro.params;
+const systemId = Astro.params.system;
+const siteData = await getSiteData();
+
+function buildSystemPageData(systemId: string | undefined): SystemPageData {
+  if (!systemId) {
+    return { system: null, boards: [], error: "Missing system identifier" };
+  }
+
+  const system = siteData.systems.get(systemId) ?? null;
+  if (!system) {
+    return {
+      system: null,
+      boards: [],
+      error: `System information for "${systemId}" not found`,
+    };
+  }
+
+  const boardMap = new Map<string, SystemBoardSummary>();
+
+  for (const report of system.reports) {
+    if (report.sourceType !== "report" || !report.fileName) continue;
+
+    if (!boardMap.has(report.boardId)) {
+      const boardMeta = siteData.boards.get(report.boardId)?.meta;
+      boardMap.set(report.boardId, {
+        boardId: report.boardId,
+        boardName: boardMeta?.product || report.boardId,
+        vendor: boardMeta?.vendor || "",
+        cpu: boardMeta?.cpu || "",
+        reports: [],
+      });
+    }
+
+    boardMap.get(report.boardId)!.reports.push({
+      status: report.status,
+      version: report.sys_ver || null,
+      variant: report.sys_var || null,
+      lastUpdate: report.last_update || null,
+      fileName: report.fileName!,
+      systemDir: report.systemDir || systemId,
+    });
+  }
+
+  const boards = Array.from(boardMap.values()).map((board) => ({
+    ...board,
+    reports: board.reports.sort((a, b) => {
+      const timeA = a.lastUpdate ? a.lastUpdate.getTime() : 0;
+      const timeB = b.lastUpdate ? b.lastUpdate.getTime() : 0;
+      return timeB - timeA;
+    }),
+  }));
+
+  boards.sort((a, b) => a.boardName.localeCompare(b.boardName));
+
+  return { system, boards, error: null };
+}
+
+const { system, boards, error } = buildSystemPageData(systemId);
+const systemName = system?.name ?? systemId ?? "System";
 ---
 
-<Layout title={`${system} Support Matrix`}>
+<Layout title={`${systemName} Support Matrix`}>
   <div class="container mx-auto">
-    <h1 class="text-3xl font-bold mb-8 text-center">{system} Support Matrix</h1>
-    <BoardsList system={system!} />
+    {
+      error ? (
+        <div class="p-6 border border-red-300 bg-red-50 text-red-700 rounded-md">
+          <h1 class="text-2xl font-bold mb-4">Error</h1>
+          <p>{error}</p>
+        </div>
+      ) : (
+        <>
+          <h1 class="text-3xl font-bold mb-8 text-center">
+            {systemName} Support Matrix
+          </h1>
+          <BoardsList systemId={systemId!} boards={boards} />
+        </>
+      )
+    }
   </div>
 </Layout>

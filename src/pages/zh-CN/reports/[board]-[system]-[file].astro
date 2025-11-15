@@ -1,36 +1,24 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import {
-  getAllBoardsData,
-  getBoardData,
-  getBoardAllSysData,
-  getSysData,
-} from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { getLangFromUrl } from "@/i18n/utils";
+import { getSiteData } from "@/lib/data";
 
-const lang = getLangFromUrl(Astro.url);
+const reportMarkdownFiles = import.meta.glob("/support-matrix/**/*.md");
 
-// Generate static paths for all boards and their operating systems
 export async function getStaticPaths() {
-  const boardsData = await getAllBoardsData();
+  const siteData = await getSiteData();
+
   const paths = [];
 
-  for (const board of boardsData) {
-    const boardDir = board.dir;
-    const sysDataList = await getBoardAllSysData(boardDir);
+  for (const system of siteData.systems.values()) {
+    for (const report of system.reports) {
+      if (report.sourceType !== "report" || !report.fileName) continue;
 
-    for (const sysData of sysDataList) {
       paths.push({
         params: {
-          board: sysData.boardDir,
-          system: sysData.sysDir,
-          file: sysData.fileName,
-        },
-        props: {
-          boardDir: sysData.boardDir,
-          sysDir: sysData.sysDir,
-          fileName: sysData.fileName,
+          board: report.boardId,
+          system: system.id,
+          file: report.fileName,
         },
       });
     }
@@ -39,64 +27,136 @@ export async function getStaticPaths() {
   return paths;
 }
 
-const { boardDir, sysDir, fileName } = Astro.props;
+const params = Astro.params;
+const siteData = await getSiteData();
 
-let board;
-let sysData;
-let error = null;
-let Content = null;
-
-try {
-  board = await getBoardData(boardDir);
-  if (!board) {
-    error = `Board information for "${boardDir}" not found`;
-  } else {
-    sysData = await getSysData(boardDir, sysDir, fileName);
-    if (!sysData) {
-      error = `System information for "${sysDir}" not found`;
-    } else {
-      try {
-        const readmePath = `/support-matrix/${boardDir}/${sysDir}/${fileName}_zh.md`;
-        const mdFiles = import.meta.glob("/support-matrix/**/*.md");
-
-        if (mdFiles[readmePath]) {
-          const module = await mdFiles[readmePath]();
-          // @ts-ignore - Astro MDX imports have Content component
-          Content = module.Content;
-        } else {
-          error = `System README file not found: ${readmePath}`;
-        }
-      } catch (e) {
-        error = `Error loading system data: ${e instanceof Error ? e.message : String(e)}`;
-        console.error(error);
-      }
-    }
-  }
-} catch (e) {
-  error = `Error loading data: ${e instanceof Error ? e.message : String(e)}`;
-  console.error(error);
+interface PageState {
+  boardName: string | null;
+  systemId: string | null;
+  systemName: string | null;
+  report: {
+    version: string | null;
+    variant: string | null;
+    status: string;
+    lastUpdate: Date | null;
+  } | null;
+  error: string | null;
+  content: any;
 }
 
+async function loadPageState(): Promise<PageState> {
+  const boardId = params.board;
+  const systemId = params.system;
+  const fileName = params.file;
+
+  if (!boardId || !systemId || !fileName) {
+    return {
+      boardName: null,
+      systemId: null,
+      systemName: null,
+      report: null,
+      error: "缺少报告参数",
+      content: null,
+    };
+  }
+
+  const board = siteData.boards.get(boardId);
+  const system = siteData.systems.get(systemId);
+
+  if (!board) {
+    return {
+      boardName: null,
+      systemId,
+      systemName: system?.name ?? systemId,
+      report: null,
+      error: `未找到开发板 ${boardId} 的信息`,
+      content: null,
+    };
+  }
+
+  if (!system) {
+    return {
+      boardName: board.meta.product,
+      systemId,
+      systemName: systemId,
+      report: null,
+      error: `未找到系统 ${systemId} 的信息`,
+      content: null,
+    };
+  }
+
+  const report = system.reports.find(
+    (item) => item.boardId === boardId && item.fileName === fileName,
+  );
+
+  if (!report || report.sourceType !== "report") {
+    return {
+      boardName: board.meta.product,
+      systemId,
+      systemName: system.name,
+      report: null,
+      error: `未找到 ${system.name} 的报告 ${fileName}`,
+      content: null,
+    };
+  }
+
+  const zhMarkdownPath = `/support-matrix/${boardId}/${systemId}/${fileName}_zh.md`;
+  const defaultMarkdownPath = `/support-matrix/${boardId}/${systemId}/${fileName}.md`;
+
+  let Content: any = null;
+  if (reportMarkdownFiles[zhMarkdownPath]) {
+    const module = await reportMarkdownFiles[zhMarkdownPath]();
+    Content = (module as any).Content;
+  } else if (reportMarkdownFiles[defaultMarkdownPath]) {
+    const module = await reportMarkdownFiles[defaultMarkdownPath]();
+    Content = (module as any).Content;
+  } else {
+    return {
+      boardName: board.meta.product,
+      systemId,
+      systemName: system.name,
+      report: null,
+      error: `无法找到报告文件：${zhMarkdownPath}`,
+      content: null,
+    };
+  }
+
+  return {
+    boardName: board.meta.product,
+    systemId,
+    systemName: system.name,
+    report: {
+      version: report.sys_ver || null,
+      variant: report.sys_var || null,
+      status: report.status,
+      lastUpdate: report.last_update || null,
+    },
+    error: null,
+    content: Content,
+  };
+}
+
+const pageState = await loadPageState();
 const title =
-  board && sysData
-    ? `${sysData.sysDir} 在 ${board.product} 上的测试报告 `
+  pageState.boardName && pageState.systemName
+    ? `${pageState.systemName} 在 ${pageState.boardName} 上的测试报告`
     : "未找到该系统";
 ---
 
 <Layout title={title}>
   <div class="max-w-5xl mx-auto">
     {
-      error ? (
+      pageState.error ? (
         <div class="p-6 border border-red-300 bg-red-50 text-red-700 rounded-md">
           <h1 class="text-2xl font-bold mb-4">错误</h1>
-          <p>{error}</p>
+          <p>{pageState.error}</p>
         </div>
       ) : (
         <>
           <Card className="mb-8">
             <CardHeader>
               <CardTitle className="text-2xl">
-                {sysData!.sysDir} @ {board!.product} 测试报告
+                {pageState.systemName} @ {pageState.boardName} 测试报告
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -106,29 +166,31 @@ const title =
                     <h3 class="text-sm font-medium text-muted-foreground">
                       支持状态
                     </h3>
-                    <p class="text-lg">{sysData!.status}</p>
+                    <p class="text-lg">{pageState.report?.status ?? "-"}</p>
                   </div>
-                  {sysData!.sys_ver && (
-                    <div>
-                      <h3 class="text-sm font-medium text-muted-foreground">
-                        系统版本
-                      </h3>
-                      <p class="text-lg">{sysData!.sys_ver}</p>
-                    </div>
-                  )}
-                  {sysData!.sys_var && (
+                  <div>
+                    <h3 class="text-sm font-medium text-muted-foreground">
+                      系统版本
+                    </h3>
+                    <p class="text-lg">{pageState.report?.version ?? "-"}</p>
+                  </div>
+                  {pageState.report?.variant && (
                     <div>
                       <h3 class="text-sm font-medium text-muted-foreground">
                         系统变种
                       </h3>
-                      <p class="text-lg">{sysData!.sys_var}</p>
+                      <p class="text-lg">{pageState.report.variant}</p>
                     </div>
                   )}
                   <div>
                     <h3 class="text-sm font-medium text-muted-foreground">
                       最后更新
                     </h3>
-                    <p class="text-lg">{sysData!.last_update}</p>
+                    <p class="text-lg">
+                      {pageState.report?.lastUpdate
+                        ? pageState.report.lastUpdate.toLocaleDateString()
+                        : "-"}
+                    </p>
                   </div>
                 </div>
                 <div
@@ -136,7 +198,11 @@ const title =
             prose-pre:whitespace-pre-wrap prose-pre:word-break-normal prose-pre:break-words
             prose-a:break-words prose-a:overflow-wrap-anywhere prose-a:word-break-all"
                 >
-                  {Content ? <Content /> : <p>没有可用于此系统的详细信息。</p>}
+                  {pageState.content ? (
+                    <pageState.content />
+                  ) : (
+                    <p>没有可用于此系统的详细信息。</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -146,7 +212,7 @@ const title =
             <p class="text-sm text-muted-foreground">
               来源:
               <a
-                href={`https://github.com/ruyisdk/support-matrix/blob/main/${boardDir}/${sysDir}/${fileName}_zh.md`}
+                href={`https://github.com/ruyisdk/support-matrix/blob/main/${params.board}/${params.system}/${params.file}_zh.md`}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-primary hover:underline"

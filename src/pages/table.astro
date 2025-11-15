@@ -1,22 +1,111 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import Matrix from "@/components/Matrix";
-import { getAllBoardsData, getAllSysDataWithOther } from "@/lib/data";
+import { getSiteData } from "@/lib/data";
 import { getLangFromUrl } from "@/i18n/utils";
+import SupportMatrix from "@/components/table/SupportMatrix";
+import type {
+  MatrixData,
+  BoardDefinition,
+  SystemDefinition,
+} from "@/components/table/types";
+import type { ReportStatus } from "@/config/site";
 
-// Get all board and system data
-const boardsData = await getAllBoardsData();
-const sysData = await getAllSysDataWithOther();
-
+const siteData = await getSiteData();
 const lang = getLangFromUrl(Astro.url);
+
+const boards: BoardDefinition[] = Array.from(siteData.boards.values()).map(
+  (board) => ({
+    id: board.id,
+    meta: board.meta,
+  }),
+);
+
+const systems: SystemDefinition[] = Array.from(siteData.systems.values()).map(
+  (system) => ({
+    id: system.id,
+    name: system.name,
+  }),
+);
+
+const matrixData: MatrixData = {};
+
+const statusPriority: Record<ReportStatus | string, number> = {
+  GOOD: 0,
+  BASIC: 1,
+  CFT: 2,
+  CFH: 3,
+  CFI: 4,
+  WIP: 5,
+  UNKNOWN: 6,
+};
+
+function ensureCell(boardId: string, systemId: string) {
+  if (!matrixData[boardId]) {
+    matrixData[boardId] = {};
+  }
+  if (!matrixData[boardId][systemId]) {
+    matrixData[boardId][systemId] = { reports: [], others: [] };
+  }
+  return matrixData[boardId][systemId];
+}
+
+for (const system of siteData.systems.values()) {
+  for (const report of system.reports) {
+    const cell = ensureCell(report.boardId, system.id);
+    if (report.sourceType === "report" && report.fileName) {
+      cell.reports.push({
+        systemId: system.id,
+        systemDir: report.systemDir,
+        boardId: report.boardId,
+        fileName: report.fileName,
+        status: report.status,
+        version: report.sys_ver || null,
+        variant: report.sys_var || null,
+        lastUpdate: report.last_update || null,
+      });
+    } else {
+      cell.others.push({
+        systemId: system.id,
+        systemDir: report.systemDir,
+        boardId: report.boardId,
+        status: report.status,
+        lastUpdate: report.last_update || null,
+      });
+    }
+  }
+}
+
+for (const boardId of Object.keys(matrixData)) {
+  for (const systemId of Object.keys(matrixData[boardId])) {
+    const cell = matrixData[boardId][systemId];
+    cell.reports.sort((a, b) => {
+      const statusDelta =
+        (statusPriority[a.status] ?? 99) - (statusPriority[b.status] ?? 99);
+      if (statusDelta !== 0) return statusDelta;
+      const timeA = a.lastUpdate ? a.lastUpdate.getTime() : 0;
+      const timeB = b.lastUpdate ? b.lastUpdate.getTime() : 0;
+      return timeB - timeA;
+    });
+    cell.others.sort((a, b) => {
+      const statusDelta =
+        (statusPriority[a.status] ?? 99) - (statusPriority[b.status] ?? 99);
+      if (statusDelta !== 0) return statusDelta;
+      const timeA = a.lastUpdate ? a.lastUpdate.getTime() : 0;
+      const timeB = b.lastUpdate ? b.lastUpdate.getTime() : 0;
+      return timeB - timeA;
+    });
+  }
+}
 ---
 
 <Layout title="OS Support Matrix">
-  <Matrix
-    client:load
-    lang={lang}
-    boardsData={boardsData}
-    sysData={sysData}
-    metadataPath="/support-matrix/assets/metadata.yml"
-  />
+  <div class="space-y-16">
+    <SupportMatrix
+      client:load
+      lang={lang}
+      boards={boards}
+      systems={systems}
+      matrix={matrixData}
+    />
+  </div>
 </Layout>

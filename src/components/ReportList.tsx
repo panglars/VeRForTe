@@ -490,7 +490,7 @@ export default function ReportList({
                     const report = row.original;
                     const url = getRelativeUrl(
                       lang,
-                      `reports/${report.boardId}-${report.sys}-${report.fileName}`,
+                      `reports/${report.boardId}-${report.systemDir || report.sys}-${report.fileName}`,
                     );
                     window.location.href = url;
                   }}

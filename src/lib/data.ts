@@ -21,7 +21,8 @@ export interface ReportMetaData {
   sys_var: string | null; // Variant identifier
   status: ReportStatus; // Support Status
   last_update: Date; // Last Update or commit date
-  boardId: string; // The board's 'dir'
+  boardId: string; // Report's board's 'dir'
+  systemDir: string; // Report's system's 'dir'
   sourceType: "report" | "other"; // A flag to distinguish the source
   fileName: string | null; // The original .md file name, for variant system
 }
@@ -294,7 +295,7 @@ async function loadReportsFromMarkdown(): Promise<
       );
       if (!match) return null;
 
-      const [, boardId, sysDir, fileName] = match;
+      const [, boardId, systemDir, fileName] = match;
 
       // Skip excluded directories
       if (["assets", ".github", "report-template"].includes(boardId))
@@ -321,6 +322,7 @@ async function loadReportsFromMarkdown(): Promise<
             ? new Date(frontmatter.last_update)
             : null,
           boardId,
+          systemDir,
           fileName,
         };
       } catch (error) {

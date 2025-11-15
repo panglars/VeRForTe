@@ -1,44 +1,87 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import { getAllBoardsData, getBoardData, getBoardSysDirs } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import SystemsList from "@/components/details/SystemsList.astro";
+import type { BoardSystemSummary } from "@/components/details/types";
+import type { Board } from "@/lib/data";
+import { getSiteData } from "@/lib/data";
+
+interface BoardPageData {
+  board: Board | null;
+  systems: BoardSystemSummary[];
+  error: string | null;
+}
 
 // Generate static paths for all boards
 export async function getStaticPaths() {
-  const boardsData = await getAllBoardsData();
+  const siteData = await getSiteData();
 
-  return boardsData.map((board) => ({
-    params: { board: board.dir },
-    props: { boardDir: board.dir },
+  return Array.from(siteData.boards.values()).map((board) => ({
+    params: { board: board.id },
   }));
 }
 
-// Get the board name from props and fetch the data
-const { boardDir } = Astro.props;
-let board;
-let error = null;
-let osList: { sysDir: string; fileName: string }[] | undefined = [];
+const boardId = Astro.params.board;
+const siteData = await getSiteData();
 
-try {
-  board = await getBoardData(boardDir);
-
-  if (!board) {
-    error = `Board information for "${boardDir}" not found`;
-  } else {
-    const dirs = await getBoardSysDirs(boardDir);
-    osList = dirs.map((dir) => ({
-      sysDir: dir.sysDir,
-      fileName: dir.fileName,
-    }));
+function buildBoardPageData(boardId: string | undefined): BoardPageData {
+  if (!boardId) {
+    return { board: null, systems: [], error: "缺少开发板参数" };
   }
-} catch (e) {
-  error = `Error loading board data: ${e instanceof Error ? e.message : String(e)}`;
-  console.error(error);
+
+  const board = siteData.boards.get(boardId) ?? null;
+  if (!board) {
+    return {
+      board: null,
+      systems: [],
+      error: `未找到开发板 ${boardId} 的信息`,
+    };
+  }
+
+  const systems: BoardSystemSummary[] = Array.from(board.systems.entries())
+    .map(([systemId, reports]) => {
+      const validReports = reports.filter(
+        (report) => report.sourceType === "report" && report.fileName,
+      );
+
+      if (validReports.length === 0) {
+        return null;
+      }
+
+      const normalizedReports = validReports
+        .map((report) => ({
+          id: `${systemId}-${report.fileName}`,
+          status: report.status,
+          version: report.sys_ver || null,
+          variant: report.sys_var || null,
+          lastUpdate: report.last_update || null,
+          fileName: report.fileName!,
+          systemDir: report.systemDir || systemId,
+        }))
+        .sort((a, b) => {
+          const timeA = a.lastUpdate ? a.lastUpdate.getTime() : 0;
+          const timeB = b.lastUpdate ? b.lastUpdate.getTime() : 0;
+          return timeB - timeA;
+        });
+
+      return {
+        systemId,
+        systemName: siteData.systems.get(systemId)?.name || systemId,
+        reports: normalizedReports,
+      };
+    })
+    .filter((system): system is BoardSystemSummary => Boolean(system))
+    .sort((a, b) => a.systemName.localeCompare(b.systemName));
+
+  return { board, systems, error: null };
 }
+
+const { board, systems, error } = buildBoardPageData(boardId);
+const boardMeta = board?.meta;
+const pageTitle = boardMeta?.product ?? "Board Not Found";
 ---
 
-<Layout title={board ? board.product : "Board Not Found"}>
+<Layout title={pageTitle}>
   <div class="mx-auto">
     {
       error ? (
@@ -50,7 +93,7 @@ try {
         <>
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="text-2xl">{board!.product}</CardTitle>
+              <CardTitle className="text-2xl">{boardMeta!.product}</CardTitle>
             </CardHeader>
             <CardContent>
               <div class="space-y-4">
@@ -59,32 +102,32 @@ try {
                     <h3 class="text-sm font-medium text-muted-foreground">
                       处理器
                     </h3>
-                    <p class="text-lg">{board!.cpu}</p>
+                    <p class="text-lg">{boardMeta!.cpu}</p>
                   </div>
                   <div>
                     <h3 class="text-sm font-medium text-muted-foreground">
                       内存
                     </h3>
-                    <p class="text-lg">{board!.ram}</p>
+                    <p class="text-lg">{boardMeta!.ram}</p>
                   </div>
                   <div>
                     <h3 class="text-sm font-medium text-muted-foreground">
                       核心
                     </h3>
-                    <p class="text-lg">{board!.cpu_core}</p>
+                    <p class="text-lg">{boardMeta!.cpu_core}</p>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <SystemsList boardDir={boardDir} osList={osList} />
+          <SystemsList boardId={boardId!} systems={systems} />
 
           <div class="mt-8">
             <p class="text-sm text-muted-foreground">
               来源:
               <a
-                href={`https://github.com/ruyisdk/support-matrix/blob/main/${boardDir}/README_zh.md`}
+                href={`https://github.com/ruyisdk/support-matrix/blob/main/${boardId}/README_zh.md`}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-primary hover:underline"

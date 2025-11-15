@@ -1,19 +1,55 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import { getAllBoardsData, getAllSysData } from "@/lib/data";
 import Overview from "@/components/home/Overview";
+import type { OverviewSystemSummary } from "@/components/home/types";
 import { siteConfig } from "@/config/site";
+import { getSiteData } from "@/lib/data";
 import { getLangFromUrl } from "@/i18n/utils";
 
-// Get all board data
-const boardsData = await getAllBoardsData();
-const sysData = await getAllSysData();
+const siteData = await getSiteData();
 const lang = getLangFromUrl(Astro.url);
+
+const boardsData = Array.from(siteData.boards.values()).map(
+  (board) => board.meta,
+);
+
+const systemsData: OverviewSystemSummary[] = Array.from(
+  siteData.systems.values(),
+).map((system) => {
+  const boards = new Map<string, { id: string; product: string; vendor: string }>();
+
+  for (const report of system.reports) {
+    if (!boards.has(report.boardId)) {
+      const boardMeta = siteData.boards.get(report.boardId)?.meta;
+      boards.set(report.boardId, {
+        id: report.boardId,
+        product: boardMeta?.product || report.boardId,
+        vendor: boardMeta?.vendor || "",
+      });
+    }
+  }
+
+  const statusCounts = system.reports.reduce(
+    (acc, report) => {
+      acc[report.status] = (acc[report.status] || 0) + 1;
+      return acc;
+    },
+    {} as OverviewSystemSummary["statusCounts"],
+  );
+
+  return {
+    id: system.id,
+    name: system.name,
+    boards: Array.from(boards.values()),
+    reportCount: system.reports.length,
+    statusCounts,
+  };
+});
 ---
 
 <Layout title={siteConfig.title}>
   <h1 class="justify-center text-4xl flex my-8">{siteConfig.title}</h1>
   <div class="max-w-5xl mx-auto">
-    <Overview client:load boards={boardsData} sysData={sysData} lang={lang} />
+    <Overview client:load boards={boardsData} systems={systemsData} lang={lang} />
   </div>
 </Layout>

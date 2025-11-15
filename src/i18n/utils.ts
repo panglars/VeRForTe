@@ -56,6 +56,6 @@ export function getRelativeUrl(locale: LocaleCode, path: string): string {
     return partialPath;
   };
 
-  const route = path.replaceAll("/", "");
+  const route = path.replace(/^\/+/, "");
   return addTrailingSlash(addLocalePrefix(route));
 }

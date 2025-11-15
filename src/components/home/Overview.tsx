@@ -5,20 +5,21 @@ import { Input } from "../ui/input";
 import { Search as SearchIcon } from "lucide-react";
 import { useTranslations } from "@/i18n/utils";
 import { getRuyiDeviceVendor } from "@/lib/package-index";
-import type { BoardMetaData, SysMetaData } from "@/lib/data";
+import type { BoardMetaData } from "@/lib/data";
 import { ui } from "@/i18n/ui";
 import { Button } from "../ui/button";
 import BoardsCard from "./BoardsCard";
 import SystemsCard from "./SystemsCard";
+import type { OverviewSystemSummary } from "./types";
 
 interface Props {
   boards: BoardMetaData[];
-  sysData?: SysMetaData[];
+  systems: OverviewSystemSummary[];
   lang: keyof typeof ui;
 }
 
 type View = "boards" | "systems";
-type SortField = "vendor" | "product" | "sys" | "boardDir";
+type SortField = "vendor" | "product" | "systemName";
 
 interface GenericSortOption extends SortOption {
   field: SortField;
@@ -27,7 +28,7 @@ interface GenericSortOption extends SortOption {
 
 const Overview: React.FC<Props> = ({
   boards: initialBoards,
-  sysData: initialSysData = [],
+  systems: initialSystems = [],
   lang,
 }) => {
   const t = useTranslations(lang);
@@ -82,18 +83,18 @@ const Overview: React.FC<Props> = ({
   const systemSortOptions: GenericSortOption[] = useMemo(
     () => [
       {
-        id: "sys-asc",
+        id: "system-name-asc",
         label: t("sort.asc"),
-        field: "sys",
+        field: "systemName",
         direction: "asc",
-        sortFn: (a, b) => (a.sys || "").localeCompare(b.sys || ""),
+        sortFn: (a, b) => a.name.localeCompare(b.name),
       },
       {
-        id: "sys-desc",
+        id: "system-name-desc",
         label: t("sort.desc"),
-        field: "sys",
+        field: "systemName",
         direction: "desc",
-        sortFn: (a, b) => (b.sys || "").localeCompare(a.sys || ""),
+        sortFn: (a, b) => b.name.localeCompare(a.name),
       },
     ],
     [t],
@@ -123,7 +124,7 @@ const Overview: React.FC<Props> = ({
     const normalizedQuery = searchQuery.toLowerCase().trim();
 
     let filteredBoards = initialBoards;
-    let filteredSystems = initialSysData;
+    let filteredSystems = initialSystems;
 
     if (normalizedQuery) {
       filteredBoards = initialBoards.filter((board) => {
@@ -135,37 +136,51 @@ const Overview: React.FC<Props> = ({
         );
       });
 
-      filteredSystems = initialSysData.filter((sys) => {
-        const sysName = sys.sys.toLowerCase();
-        const boardName = sys.boardDir.toLowerCase();
-        return [sysName, boardName].some((attr) =>
-          attr.includes(normalizedQuery),
+      filteredSystems = initialSystems.filter((system) => {
+        const name = system.name.toLowerCase();
+        const id = system.id.toLowerCase();
+        const boardMatches = system.boards.some((board) => {
+          const product = board.product?.toLowerCase() || "";
+          const vendor = board.vendor?.toLowerCase() || "";
+          const boardId = board.id.toLowerCase();
+          return [product, vendor, boardId].some((attr) =>
+            attr.includes(normalizedQuery),
+          );
+        });
+
+        return (
+          name.includes(normalizedQuery) ||
+          id.includes(normalizedQuery) ||
+          boardMatches
         );
       });
     }
 
     return { filteredBoards, filteredSystems };
-  }, [initialBoards, initialSysData, searchQuery]);
+  }, [initialBoards, initialSystems, searchQuery]);
 
   const sortedData = useMemo(() => {
     const { filteredBoards, filteredSystems } = filteredData;
     const isBoardSort = ["vendor", "product"].includes(currentSort.field);
 
     let sortedBoards: BoardMetaData[];
-    let sortedSystems: SysMetaData[];
+    let sortedSystems: OverviewSystemSummary[];
 
     if (isBoardSort) {
       sortedBoards = sortItems(filteredBoards, currentSort) as BoardMetaData[];
       sortedSystems = sortItems(
         filteredSystems,
         systemSortOptions[0],
-      ) as SysMetaData[];
+      ) as OverviewSystemSummary[];
     } else {
       sortedBoards = sortItems(
         filteredBoards,
         boardSortOptions[0],
       ) as BoardMetaData[];
-      sortedSystems = sortItems(filteredSystems, currentSort) as SysMetaData[];
+      sortedSystems = sortItems(
+        filteredSystems,
+        currentSort,
+      ) as OverviewSystemSummary[];
     }
 
     return { sortedBoards, sortedSystems };
@@ -187,7 +202,7 @@ const Overview: React.FC<Props> = ({
     if (newView === "boards") {
       setCurrentSortId("vendor-asc");
     } else {
-      setCurrentSortId("sys-asc");
+      setCurrentSortId("system-name-asc");
     }
   };
 

@@ -1,5 +1,4 @@
 import React from "react";
-import { getRelativeLocaleUrl } from "astro:i18n";
 import {
   Card,
   CardHeader,
@@ -8,7 +7,7 @@ import {
   CardContent,
 } from "../ui/card";
 import { ui } from "@/i18n/ui";
-import { useTranslations } from "@/i18n/utils";
+import { useTranslations, getRelativeUrl } from "@/i18n/utils";
 
 import type { BoardMetaData } from "@/lib/data";
 
@@ -25,11 +24,7 @@ const BoardsCard: React.FC<Props> = ({ boards, deviceNames, lang }) => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {boards.map((board, index) => (
         <div key={`${board.dir}-${index}`} className="board-card">
-          <a
-            href={getRelativeLocaleUrl(lang, `boards/${board.dir}`, {
-              normalizeLocale: false,
-            })}
-          >
+          <a href={getRelativeUrl(lang, `boards/${board.dir}`)}>
             <Card className="h-56 transition-transform duration-200 hover:bg-muted hover:shadow-lg hover:translate-y-[-0.25rem]">
               <CardHeader>
                 <CardTitle className="flex justify-between text-lg font-semibold">
