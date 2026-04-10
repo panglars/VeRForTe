@@ -34,6 +34,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Check, FilterX, SlidersHorizontal, EyeOff, Info } from "lucide-react";
 import { defaultLang, ui } from "@/i18n/ui";
+import { getReportRoutePath } from "@/lib/report-routes";
 import {
   Popover,
   PopoverContent,
@@ -102,14 +103,20 @@ const StatusCell = React.memo(
     );
 
     const canLink =
-      systemInfo?.lastUpdate != null || systemInfo?.lastUpdate != undefined;
+      systemInfo?.lastUpdate != null &&
+      systemInfo?.sysDir != null &&
+      systemInfo?.fileName != null;
 
     if (canLink) {
       return (
         <a
           href={getRelativeLocaleUrl(
             lang,
-            `reports/${boardDir}-${systemInfo.sysDir}-${systemInfo.fileName}`,
+            getReportRoutePath({
+              boardId: boardDir,
+              systemDir: systemInfo.sysDir,
+              fileName: systemInfo.fileName,
+            }),
             {
               normalizeLocale: false,
             },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Github, Menu, X, ExternalLink, Home } from "lucide-react";
+import { Menu, X, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./ModeToggle";
 import { LangToggle } from "./LangToggle";
@@ -10,19 +10,12 @@ interface SidebarToggleProps {
     label: string;
     href: string;
   }[];
-  externalLinks?: {
-    label: string;
-    href: string;
-  }[];
-  github: string;
   currentPath: string;
   lang: any;
 }
 
 const SidebarToggle: React.FC<SidebarToggleProps> = ({
   navigation,
-  externalLinks = [],
-  github,
   currentPath,
   lang,
 }) => {
@@ -130,40 +123,11 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({
               ))}
             </nav>
 
-            {/* External Links */}
-            {externalLinks.length > 0 && (
-              <nav className="px-4 pb-4 space-y-1 border-t">
-                {externalLinks.map((link) => (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-base py-3 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2"
-                    onClick={closeSidebar}
-                  >
-                    {t(link.label)}
-                    <ExternalLink className="h-4 w-4 flex-shrink-0" />
-                  </a>
-                ))}
-              </nav>
-            )}
-
             {/* Sidebar Controls */}
             <div className="border-t p-4">
               <div className="flex items-center justify-center space-x-3">
                 <ModeToggle />
                 <LangToggle currentPath={currentPath} />
-                <a
-                  href={github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ textDecoration: "none" }}
-                >
-                  <Button variant="ghost" size="icon" className="h-10 w-10">
-                    <Github className="h-5 w-5" />
-                  </Button>
-                </a>
               </div>
             </div>
           </div>

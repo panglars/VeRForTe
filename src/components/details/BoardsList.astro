@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { statusClassMap } from "@/config/site";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { getLangFromUrl, useTranslations } from "@/i18n/utils";
+import { getReportRoutePath } from "@/lib/report-routes";
 import type { SystemBoardSummary } from "./types";
 
 const lang = getLangFromUrl(Astro.url);
@@ -39,7 +40,11 @@ const formatDate = (value: Date | null) =>
               <a
                 href={getRelativeLocaleUrl(
                   lang,
-                  `reports/${board.boardId}-${report.systemDir}-${report.fileName}`,
+                  getReportRoutePath({
+                    boardId: board.boardId,
+                    systemDir: report.systemDir,
+                    fileName: report.fileName,
+                  }),
                   { normalizeLocale: false },
                 )}
                 class="block rounded-lg border border-border p-4 transition-colors hover:bg-accent"

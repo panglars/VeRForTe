@@ -2,6 +2,12 @@
 import Layout from "@/layouts/Layout.astro";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { getSiteData } from "@/lib/data";
+import {
+  findReportByRoute,
+  getReportMarkdownPath,
+  getReportRouteParams,
+  type ReportRouteParts,
+} from "@/lib/report-routes";
 
 const reportMarkdownFiles = import.meta.glob("/support-matrix/**/*.md");
 
@@ -12,13 +18,15 @@ export async function getStaticPaths() {
 
   for (const system of siteData.systems.values()) {
     for (const report of system.reports) {
-      if (report.sourceType !== "report" || !report.fileName) continue;
+      const params = getReportRouteParams(report);
+      if (!params) continue;
 
       paths.push({
-        params: {
-          board: report.boardId,
-          system: report.systemDir,
-          file: report.fileName,
+        params,
+        props: {
+          boardId: params.board,
+          systemDir: params.system,
+          fileName: params.file,
         },
       });
     }
@@ -27,7 +35,7 @@ export async function getStaticPaths() {
   return paths;
 }
 
-const params = Astro.params;
+const routeParts = Astro.props as ReportRouteParts;
 const siteData = await getSiteData();
 
 interface PageState {
@@ -45,9 +53,7 @@ interface PageState {
 }
 
 async function loadPageState(): Promise<PageState> {
-  const boardId = params.board;
-  const systemDir = params.system;
-  const fileName = params.file;
+  const { boardId, systemDir, fileName } = routeParts;
 
   if (!boardId || !systemDir || !fileName) {
     return {
@@ -61,7 +67,8 @@ async function loadPageState(): Promise<PageState> {
   }
 
   const board = siteData.boards.get(boardId);
-  const system = siteData.systems.get(systemDir);
+  const report = findReportByRoute(siteData.allReports, routeParts);
+  const system = report ? siteData.systems.get(report.sys) : null;
 
   if (!board) {
     return {
@@ -74,39 +81,25 @@ async function loadPageState(): Promise<PageState> {
     };
   }
 
-  if (!system) {
+  if (!report) {
     return {
       boardName: board.meta.product,
       systemDir: systemDir,
       systemName: systemDir,
       report: null,
-      error: `System information for "${systemDir}" not found`,
+      error: `Report "${fileName}" not found under ${systemDir}`,
       content: null,
     };
   }
 
-  const report = system.reports.find(
-    (item) => item.boardId === boardId && item.fileName === fileName,
-  );
-
-  if (!report || report.sourceType !== "report") {
-    return {
-      boardName: board.meta.product,
-      systemDir: systemDir,
-      systemName: system.name,
-      report: null,
-      error: `Report "${fileName}" not found for ${system.name}`,
-      content: null,
-    };
-  }
-
-  const markdownPath = `/support-matrix/${boardId}/${systemDir}/${fileName}.md`;
+  const systemName = system?.name ?? report.sys;
+  const markdownPath = getReportMarkdownPath(routeParts);
 
   if (!reportMarkdownFiles[markdownPath]) {
     return {
       boardName: board.meta.product,
       systemDir: systemDir,
-      systemName: system.name,
+      systemName,
       report: null,
       error: `System README file not found: ${markdownPath}`,
       content: null,
@@ -119,7 +112,7 @@ async function loadPageState(): Promise<PageState> {
   return {
     boardName: board.meta.product,
     systemDir: systemDir,
-    systemName: system.name,
+    systemName,
     report: {
       version: report.sys_ver || null,
       variant: report.sys_var || null,
@@ -207,7 +200,7 @@ const title =
             <p class="text-sm text-muted-foreground">
               Source:
               <a
-                href={`https://github.com/ruyisdk/support-matrix/blob/main/${params.board}/${params.system}/${params.file}.md`}
+                href={`https://github.com/ruyisdk/support-matrix/blob/main/${routeParts.boardId}/${routeParts.systemDir}/${routeParts.fileName}.md`}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-primary hover:underline"

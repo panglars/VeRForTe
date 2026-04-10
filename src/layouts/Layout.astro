@@ -4,7 +4,6 @@ import Footer from "@/components/core/Footer.astro";
 import { getLangFromUrl, useTranslations } from "../i18n/utils";
 import { ClientRouter } from "astro:transitions";
 import "@fontsource-variable/open-sans";
-import { siteConfig } from "@/config/site";
 
 export interface Props {
   title: string;
@@ -32,14 +31,9 @@ const currentPath = Astro.url.pathname;
         font-sans">
     <Header
       client:load
-      siteConfig={siteConfig}
       navigation={[
         { label: "nav.table", href: "/table/" },
         { label: "nav.list", href: "/reports/" },
-      ]}
-      externalLinks={[
-        { label: "nav.ruyi", href: "https://ruyisdk.org" },
-        { label: "nav.ruyi_community", href: "https://ruyisdk.cn" },
       ]}
       currentPath={currentPath}
       lang={lang}

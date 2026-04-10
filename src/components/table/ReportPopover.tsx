@@ -9,6 +9,7 @@ import { StatusBadge } from "./StatusBadge";
 import type { ReportSummary } from "./types";
 import { Calendar, ExternalLink } from "lucide-react";
 import { useTranslations, getRelativeUrl, type LocaleCode } from "@/i18n/utils";
+import { getReportRoutePath } from "@/lib/report-routes";
 
 interface ReportPopoverProps {
   reports: ReportSummary[];
@@ -40,7 +41,11 @@ export function ReportPopover({
                 key={report.fileName}
                 href={getRelativeUrl(
                   lang,
-                  `reports/${boardId}-${report.systemDir}-${report.fileName}`,
+                  getReportRoutePath({
+                    boardId,
+                    systemDir: report.systemDir,
+                    fileName: report.fileName,
+                  }),
                 )}
                 className="block px-4 py-3 hover:bg-muted/60 transition-colors"
               >

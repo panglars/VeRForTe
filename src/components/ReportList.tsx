@@ -34,6 +34,7 @@ import { Badge } from "@/components/ui/badge";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import type { ReportMetaData } from "@/lib/data";
 import { useTranslations, getRelativeUrl, type LocaleCode } from "@/i18n/utils";
+import { getReportRoutePath } from "@/lib/report-routes";
 import { statusClassMap } from "@/config/site";
 import { format, isWithinInterval } from "date-fns";
 import type { DateRange } from "react-day-picker";
@@ -490,7 +491,11 @@ export default function ReportList({
                     const report = row.original;
                     const url = getRelativeUrl(
                       lang,
-                      `reports/${report.boardId}-${report.systemDir || report.sys}-${report.fileName}`,
+                      getReportRoutePath({
+                        boardId: report.boardId,
+                        systemDir: report.systemDir,
+                        fileName: report.fileName!,
+                      }),
                     );
                     window.location.href = url;
                   }}

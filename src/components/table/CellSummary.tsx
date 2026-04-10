@@ -2,6 +2,7 @@ import { StatusBadge } from "./StatusBadge";
 import { ReportPopover } from "./ReportPopover";
 import type { CellData } from "./types";
 import { getRelativeUrl, type LocaleCode } from "@/i18n/utils";
+import { getReportRoutePath } from "@/lib/report-routes";
 
 interface CellSummaryProps {
   data?: CellData;
@@ -37,7 +38,11 @@ export function CellSummary({ data, boardId, lang }: CellSummaryProps) {
       <a
         href={getRelativeUrl(
           lang,
-          `reports/${boardId}-${report.systemDir}-${report.fileName}`,
+          getReportRoutePath({
+            boardId,
+            systemDir: report.systemDir,
+            fileName: report.fileName,
+          }),
         )}
         className="space-y-1 no-underline hover:opacity-80"
       >
