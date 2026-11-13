@@ -2,7 +2,7 @@ import { i18n, trailingSlash } from "astro:config/client";
 import { ui, defaultLang, languages } from "./ui";
 
 export type LocaleCode = keyof typeof ui;
-type TranslationDictionary = (typeof ui)[typeof defaultLang];
+type TranslationDictionary = Record<keyof (typeof ui)[typeof defaultLang], string>;
 type TranslationKey = keyof TranslationDictionary;
 
 export function getLangFromUrl(url: URL): LocaleCode {

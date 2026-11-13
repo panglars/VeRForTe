@@ -15,10 +15,12 @@ export function ModeToggle() {
   const [theme] = useAtom(themeAtom);
   const setTheme = useSetAtom(setThemeAtom);
 
-  // Initialize theme on mount
+  // Apply the hydrated value without overwriting storage with the SSR default.
   React.useEffect(() => {
-    setTheme(theme);
-  }, [theme, setTheme]);
+    const isDark = theme === "dark" ||
+      (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.classList.toggle("dark", isDark);
+  }, [theme]);
 
   return (
     <DropdownMenu>

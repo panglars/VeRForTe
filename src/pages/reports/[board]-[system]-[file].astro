@@ -20,6 +20,11 @@ export async function getStaticPaths() {
           system: report.systemDir,
           file: report.fileName,
         },
+        props: {
+          boardId: report.boardId,
+          systemDir: report.systemDir,
+          fileName: report.fileName,
+        },
       });
     }
   }
@@ -27,7 +32,12 @@ export async function getStaticPaths() {
   return paths;
 }
 
-const params = Astro.params;
+// Multiple hyphen-separated parameters are ambiguous for names such as RT-Thread.
+const params = {
+  board: Astro.props.boardId,
+  system: Astro.props.systemDir,
+  file: Astro.props.fileName,
+};
 const siteData = await getSiteData();
 
 interface PageState {
@@ -61,7 +71,12 @@ async function loadPageState(): Promise<PageState> {
   }
 
   const board = siteData.boards.get(boardId);
-  const system = siteData.systems.get(systemDir);
+  // Route directories (e.g. Ubuntu) differ from metadata IDs (ubuntu).
+  const report = siteData.allReports.find(
+    (item) => item.boardId === boardId && item.systemDir === systemDir
+      && item.fileName === fileName && item.sourceType === "report",
+  );
+  const system = report ? siteData.systems.get(report.sys) : undefined;
 
   if (!board) {
     return {
@@ -84,10 +99,6 @@ async function loadPageState(): Promise<PageState> {
       content: null,
     };
   }
-
-  const report = system.reports.find(
-    (item) => item.boardId === boardId && item.fileName === fileName,
-  );
 
   if (!report || report.sourceType !== "report") {
     return {

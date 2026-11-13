@@ -1,13 +1,11 @@
+import { reportTableFeatures } from "@/lib/table-features";
 import clsx from "clsx";
 import React, { useMemo, useState } from "react";
 import {
   createColumnHelper,
   flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getSortedRowModel,
+  useTable,
   type SortingState,
-  type ColumnDef,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -19,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { useTranslations } from "@/i18n/utils";
 import { getRelativeLocaleUrl } from "astro:i18n";
-import type { BoardMetaData, SysMetaData } from "@/lib/data";
+import type { BoardMetaData, ReportMetaData } from "@/lib/data";
 import type { SystemEntry } from "./Matrix";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -44,7 +42,7 @@ import { statusClassMap } from "@/config/site";
 interface DataTableProps {
   lang: string;
   boards: BoardMetaData[];
-  systems: SysMetaData[];
+  systems: ReportMetaData[];
   systemList: SystemEntry[];
   statusMatrix: (string | null)[][];
   categoryId?: string;
@@ -54,9 +52,9 @@ interface DataTableProps {
 type TranslateFunction = (key: keyof (typeof ui)[typeof defaultLang]) => string;
 
 interface StatusSystemInfo {
-  sysDir: string | null | undefined;
+  systemDir: string | null | undefined;
   fileName: string | null | undefined;
-  lastUpdate: string | null | undefined;
+  lastUpdate: Date | null | undefined;
 }
 
 interface StatusEntry {
@@ -81,7 +79,7 @@ const StatusCell = React.memo(
     boardDir: string;
     systemInfo: StatusSystemInfo | null | undefined;
   }) => {
-    const safetyLang = lang as any as "en" | "zh_CN";
+    const safetyLang = lang as "en" | "zh-CN";
     const t = useTranslations(safetyLang);
 
     if (!status) {
@@ -109,7 +107,7 @@ const StatusCell = React.memo(
         <a
           href={getRelativeLocaleUrl(
             lang,
-            `reports/${boardDir}-${systemInfo.sysDir}-${systemInfo.fileName}`,
+            `reports/${boardDir}-${systemInfo.systemDir}-${systemInfo.fileName}`,
             {
               normalizeLocale: false,
             },
@@ -145,9 +143,9 @@ function useTableConfig({
   hideIdentical: boolean;
 }) {
   const systemsLookup = useMemo(() => {
-    const map = new Map<string, SysMetaData>();
+    const map = new Map<string, ReportMetaData>();
     systems.forEach((sys) => {
-      map.set(`${sys.boardDir}-${sys.sys}`, sys);
+      map.set(`${sys.boardId}-${sys.sys}`, sys);
     });
     return map;
   }, [systems]);
@@ -233,7 +231,7 @@ function useTableConfig({
           status,
           systemInfo: systemInfo
             ? {
-                sysDir: systemInfo.sysDir,
+                systemDir: systemInfo.systemDir,
                 fileName: systemInfo.fileName,
                 lastUpdate: systemInfo.last_update,
               }
@@ -264,13 +262,13 @@ function useTableConfig({
   ]);
 
   const columns = useMemo(() => {
-    const columnHelper = createColumnHelper<AugmentedRowData>();
+    const columnHelper = createColumnHelper<typeof reportTableFeatures, AugmentedRowData>();
 
     const boardColumn = columnHelper.accessor("board", {
       id: "board",
       header: "Board",
       cell: (info) => info.getValue().product,
-      sortingFn: (rowA, rowB) =>
+      sortFn: (rowA, rowB) =>
         rowA.original.board.product.localeCompare(rowB.original.board.product),
       enableSorting: true,
     });
@@ -296,7 +294,7 @@ function useTableConfig({
             />
           );
         },
-        sortingFn: (rowA, rowB) => {
+        sortFn: (rowA, rowB) => {
           const statusA = rowA.original.statuses[system.id]?.status || "";
           const statusB = rowB.original.statuses[system.id]?.status || "";
           return statusA.localeCompare(statusB);
@@ -305,10 +303,7 @@ function useTableConfig({
       });
     });
 
-    return [boardColumn, ...systemColumns] as ColumnDef<
-      AugmentedRowData,
-      any
-    >[];
+    return columnHelper.columns([boardColumn, ...systemColumns]);
   }, [systemList, lang, compareMode, selectedSystems]);
 
   return { columns, data: augmentedData };
@@ -415,7 +410,7 @@ export default function DataTable({
   categoryId,
   supportedBoardIndices,
 }: DataTableProps) {
-  const safetyLang = lang as any as "en" | "zh_CN";
+  const safetyLang = lang as "en" | "zh-CN";
   const t = useTranslations(safetyLang);
 
   const [sorting, setSorting] = useState<SortingState>([
@@ -492,13 +487,12 @@ export default function DataTable({
     hideIdentical,
   });
 
-  const table = useReactTable({
+  const table = useTable({
     data,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    getCoreRowModel: getCoreRowModel(),
+    features: reportTableFeatures,
   });
 
   const stickyHeaderClass = "sticky top-0 z-30 bg-muted";

@@ -3,7 +3,7 @@ import YAML from "yaml";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DataTable from "./DataTable";
 import { useTranslations } from "@/i18n/utils";
-import type { BoardMetaData, SysMetaData } from "@/lib/data";
+import type { BoardMetaData, ReportMetaData } from "@/lib/data";
 
 export interface SystemEntry {
   id: string;
@@ -33,7 +33,7 @@ interface CategoryDataItem {
 interface MatrixProps {
   lang: string;
   boardsData: BoardMetaData[];
-  sysData: SysMetaData[];
+  sysData: ReportMetaData[];
   metadataPath?: string;
 }
 
@@ -65,7 +65,7 @@ export default function Matrix({
   const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>("");
 
-  const Lang = lang as any as "en" | "zh_CN";
+  const Lang = lang as "en" | "zh-CN";
   const t = useTranslations(Lang);
 
   useEffect(() => {
@@ -156,12 +156,12 @@ export default function Matrix({
 
       const processedData = Object.entries(categories).map(
         ([categoryId, systemList]) => {
-          const systemsByBoardDir = new Map<string, SysMetaData[]>();
+          const systemsByBoardDir = new Map<string, ReportMetaData[]>();
           sysData.forEach((sys) => {
-            if (!systemsByBoardDir.has(sys.boardDir)) {
-              systemsByBoardDir.set(sys.boardDir, []);
+            if (!systemsByBoardDir.has(sys.boardId)) {
+              systemsByBoardDir.set(sys.boardId, []);
             }
-            systemsByBoardDir.get(sys.boardDir)?.push(sys);
+            systemsByBoardDir.get(sys.boardId)?.push(sys);
           });
 
           const statusMatrix = boardsData.map((board) => {

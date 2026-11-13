@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { LocaleCode } from "@/i18n/utils";
 import type {
   BoardDefinition,
   MatrixData,
@@ -7,7 +8,7 @@ import type {
 import { CellSummary } from "./CellSummary";
 
 interface SupportMatrixProps {
-  lang: string;
+  lang: LocaleCode;
   boards: BoardDefinition[];
   systems: SystemDefinition[];
   matrix: MatrixData;

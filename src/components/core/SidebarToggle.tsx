@@ -1,5 +1,6 @@
+import { Github } from "@/components/ui/github-icon";
 import React, { useState, useEffect } from "react";
-import { Github, Menu, X, ExternalLink, Home } from "lucide-react";
+import { Menu, X, ExternalLink, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./ModeToggle";
 import { LangToggle } from "./LangToggle";

@@ -2,6 +2,7 @@
 import { defineConfig } from "astro/config";
 
 import react from "@astrojs/react";
+import { unified } from "@astrojs/markdown-remark";
 import tailwindcss from "@tailwindcss/vite";
 
 import remarkGfm from "remark-gfm";
@@ -12,6 +13,7 @@ import sitemap from "@astrojs/sitemap";
 
 // https://astro.build/config
 export default defineConfig({
+    compressHTML: true,
     site: "https://matrix.ruyisdk.org",
 
     integrations: [
@@ -43,10 +45,12 @@ export default defineConfig({
                 "u-boot": "log",
             },
         },
-        remarkPlugins: [remarkGfm],
-        rehypePlugins: [
-            [rehypeAutolinkHeadings, { behavior: "wrap" }],
-            rehypeGithubAlert,
-        ],
+        processor: unified({
+            remarkPlugins: [remarkGfm],
+            rehypePlugins: [
+                [rehypeAutolinkHeadings, { behavior: "wrap" }],
+                rehypeGithubAlert,
+            ],
+        }),
     },
 });

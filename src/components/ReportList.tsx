@@ -1,10 +1,9 @@
+import { reportTableFeatures } from "@/lib/table-features";
 import React, { useState, useMemo } from "react";
 import {
   createColumnHelper,
   flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getSortedRowModel,
+  useTable,
   type SortingState,
 } from "@tanstack/react-table";
 import {
@@ -200,11 +199,11 @@ export default function ReportList({
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   // Create column helper
-  const columnHelper = createColumnHelper<EnrichedReport>();
+  const columnHelper = createColumnHelper<typeof reportTableFeatures, EnrichedReport>();
 
   // Build table columns with responsive design and fixed widths
   const columns = useMemo(
-    () => [
+    () => columnHelper.columns([
       // Board Product - always visible
       columnHelper.accessor("boardProduct", {
         header: t("reports.header.board"),
@@ -288,7 +287,7 @@ export default function ReportList({
           );
         },
       }),
-    ],
+    ]),
     [lang, t],
   );
 
@@ -336,15 +335,14 @@ export default function ReportList({
   ]);
 
   // Create table instance
-  const table = useReactTable({
+  const table = useTable({
     data: filteredData,
     columns,
     state: {
       sorting,
     },
     onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    getCoreRowModel: getCoreRowModel(),
+    features: reportTableFeatures,
   });
 
   // Prepare filter options

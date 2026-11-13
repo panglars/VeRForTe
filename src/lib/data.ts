@@ -20,7 +20,7 @@ export interface ReportMetaData {
   sys_ver: string | null; // OS version
   sys_var: string | null; // Variant identifier
   status: ReportStatus; // Support Status
-  last_update: Date; // Last Update or commit date
+  last_update: Date | null; // Last Update or commit date
   boardId: string; // Report's board's 'dir'
   systemDir: string; // Report's system's 'dir'
   sourceType: "report" | "other"; // A flag to distinguish the source
@@ -334,7 +334,7 @@ async function loadReportsFromMarkdown(): Promise<
 
   const reports = await Promise.all(reportPromises);
   return reports.filter(
-    (report): report is Omit<ReportMetaData, "sourceType"> => report !== null,
+    (report) => report !== null,
   );
 }
 
@@ -369,6 +369,7 @@ async function loadReportsFromOthersYml(): Promise<
           sys_var: item.sys_var || null,
           status: item.status.toUpperCase() as ReportStatus,
           last_update: null,
+          systemDir: "",
           boardId,
           fileName: null,
         }));
