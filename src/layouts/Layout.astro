@@ -1,7 +1,7 @@
 ---
 import Header from "@/components/core/Header";
 import Footer from "@/components/core/Footer.astro";
-import { getLangFromUrl, useTranslations } from "../i18n/utils";
+import { getLangFromUrl } from "../i18n/utils";
 import { ClientRouter } from "astro:transitions";
 import "@fontsource-variable/open-sans";
 import { siteConfig } from "@/config/site";
@@ -12,7 +12,6 @@ export interface Props {
 
 const lang = getLangFromUrl(Astro.url);
 const { title } = Astro.props;
-const t = useTranslations(lang);
 const currentPath = Astro.url.pathname;
 ---
 
@@ -22,14 +21,53 @@ const currentPath = Astro.url.pathname;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content=`${title}` />
+    <meta property="og:title" content={`${title}`} />
     <title>{title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="sitemap" href="/sitemap-index.xml" />
+    <script is:inline>
+      (() => {
+        const resolveTheme = () => {
+          const hashMatch = window.location.hash.match(/theme=([^&]+)/);
+          if (hashMatch) {
+            try {
+              return decodeURIComponent(hashMatch[1]);
+            } catch {
+              return hashMatch[1];
+            }
+          }
+          try {
+            const stored = window.localStorage.getItem("theme");
+            if (!stored) return "system";
+            try {
+              return JSON.parse(stored);
+            } catch {
+              return stored;
+            }
+          } catch {
+            return "system";
+          }
+        };
+
+        const applyTheme = () => {
+          const theme = resolveTheme();
+          const isDark =
+            theme === "dark" ||
+            ((theme === "system" || !theme) &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", isDark);
+        };
+
+        applyTheme();
+        if (!window.__verforteThemeBound) {
+          window.__verforteThemeBound = true;
+          document.addEventListener("astro:after-swap", applyTheme);
+        }
+      })();
+    </script>
     <ClientRouter />
   </head>
-  <body class="min-h-screen bg-background text-foreground
-        font-sans">
+  <body class="min-h-screen flex flex-col bg-background text-foreground font-sans">
     <Header
       client:load
       siteConfig={siteConfig}
@@ -44,7 +82,7 @@ const currentPath = Astro.url.pathname;
       currentPath={currentPath}
       lang={lang}
     />
-    <main class="mx-auto px-4 py-8">
+    <main class="flex-1 w-full mx-auto px-4 py-8">
       <slot />
     </main>
     <Footer />

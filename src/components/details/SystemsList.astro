@@ -1,12 +1,14 @@
 ---
-import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
+import { Card } from "../ui/card";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { getLangFromUrl, useTranslations } from "@/i18n/utils";
 import { statusClassMap } from "@/config/site";
+import { ArrowUpRight, Calendar } from "lucide-react";
 import type { BoardSystemSummary } from "./types";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
+const dateLocale = lang === "zh-CN" ? "zh-CN" : "en-US";
 
 interface Props {
   boardId: string;
@@ -16,66 +18,107 @@ interface Props {
 const { boardId, systems = [] }: Props = Astro.props;
 
 const formatDate = (value: Date | null) =>
-  value ? value.toLocaleDateString(lang) : "-";
+  value ? value.toLocaleDateString(dateLocale) : "-";
+
+const getCategoryLabel = (category: string) => {
+  if (category === "customized") {
+    return t("category.customized");
+  }
+  return t(category) || category;
+};
 ---
 
 {
   systems.length === 0 ? (
-    <div class="text-center py-12">
-      <p class="text-xl text-muted-foreground">
+    <div class="rounded-xl border border-border/80 bg-card text-center py-12">
+      <p class="text-lg text-muted-foreground">
         {t("no_results") ?? "No results found"}
       </p>
     </div>
   ) : (
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {systems.map((system) => (
-        <Card className="transition-transform duration-200 hover:bg-muted hover:shadow-lg hover:translate-y-[-0.25rem]">
-          <CardHeader>
-            <CardTitle className="text-xl">{system.systemName}</CardTitle>
-            <p class="text-sm text-muted-foreground">{system.systemId}</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {system.reports.map((report) => (
-              <a
-                href={getRelativeLocaleUrl(
-                  lang,
-                  `reports/${boardId}-${report.systemDir}-${report.fileName}`,
-                  { normalizeLocale: false },
-                )}
-                class="block rounded-lg border border-border p-4 transition-colors hover:bg-accent"
-              >
-                <div class="flex items-start justify-between gap-4">
-                  <div>
-                    {report.variant && (
-                      <p class="text-sm text-muted-foreground">
-                        {t("sys.variant")}: {report.variant}
-                      </p>
-                    )}
-                    <p class="text-base font-medium text-foreground">
-                      {report.version || "-"}
-                    </p>
-                  </div>
-                  {(() => {
-                    const statusClass =
-                      statusClassMap[report.status] ?? statusClassMap.UNKNOWN;
-                    return (
-                      <span
-                        class={`inline-block px-2 rounded-md font-medium text-xs ${statusClass}`}
-                      >
-                        {report.status}
-                      </span>
-                    );
-                  })()}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {systems.map((system) => {
+        const systemUrl = getRelativeLocaleUrl(
+          lang,
+          `systems/${system.systemId}`,
+          { normalizeLocale: false },
+        );
+
+        return (
+          <Card className="h-full flex flex-col justify-between gap-0 py-0 overflow-hidden rounded-xl border-border/80 bg-card">
+            <div class="flex-1 flex flex-col">
+              <div class="p-5 pb-3 space-y-2">
+                <div class="flex items-center justify-between gap-2 min-h-5">
+                  <span class="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    {getCategoryLabel(system.category)}
+                  </span>
                 </div>
-                <div class="mt-3 flex items-center justify-between text-sm text-muted-foreground">
-                  <span>{t("sys.update")}</span>
-                  <span>{formatDate(report.lastUpdate)}</span>
-                </div>
-              </a>
-            ))}
-          </CardContent>
-        </Card>
-      ))}
+
+                <a
+                  href={systemUrl}
+                  class="group/title flex items-start justify-between gap-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <h2 class="text-lg font-semibold leading-snug text-card-foreground group-hover/title:text-primary transition-colors">
+                    {system.systemName}
+                  </h2>
+                  <ArrowUpRight className="h-4 w-4 text-muted-foreground/60 shrink-0 mt-1 transition-transform duration-200 group-hover/title:text-primary group-hover/title:translate-x-0.5 group-hover/title:-translate-y-0.5" />
+                </a>
+              </div>
+
+              <div class="px-5 py-3 flex-1 space-y-2.5">
+                {system.reports.map((report) => {
+                  const statusClass =
+                    statusClassMap[report.status] ?? statusClassMap.UNKNOWN;
+                  return (
+                    <a
+                      href={getRelativeLocaleUrl(
+                        lang,
+                        `reports/${boardId}-${report.systemDir}-${report.fileName}`,
+                        { normalizeLocale: false },
+                      )}
+                      class="group/report block rounded-lg border border-border/70 bg-muted/15 px-3.5 py-2.5 transition-all hover:border-primary/40 hover:bg-accent/50"
+                    >
+                      <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                          <p class="text-sm font-medium text-foreground group-hover/report:text-primary transition-colors">
+                            {report.version || t("table.default_version")}
+                          </p>
+                          {report.variant && (
+                            <p class="text-xs text-muted-foreground mt-0.5">
+                              {t("sys.variant")}: {report.variant}
+                            </p>
+                          )}
+                        </div>
+                        <span
+                          class={`inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-semibold leading-none shrink-0 ${statusClass}`}
+                        >
+                          {report.status}
+                        </span>
+                      </div>
+                      <div class="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                        <span class="inline-flex items-center gap-1.5">
+                          <Calendar className="h-3 w-3 shrink-0" />
+                          <span>{formatDate(report.lastUpdate)}</span>
+                        </span>
+                        <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover/report:text-primary transition-colors" />
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div class="px-5 py-3 border-t border-border/60 bg-muted/30 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+              <span>
+                {system.reports.length} {t("card.reports")}
+              </span>
+              <span class="font-mono text-[11px] truncate">
+                {system.systemId}
+              </span>
+            </div>
+          </Card>
+        );
+      })}
     </div>
   )
 }

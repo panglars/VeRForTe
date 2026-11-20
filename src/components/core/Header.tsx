@@ -5,7 +5,12 @@ import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./ModeToggle";
 import { LangToggle } from "./LangToggle";
 import SidebarToggle from "./SidebarToggle";
-import { useTranslations, getRelativeUrl } from "@/i18n/utils";
+import {
+  useTranslations,
+  getRelativeUrl,
+  type LocaleCode,
+} from "@/i18n/utils";
+import clsx from "clsx";
 
 interface HeaderProps {
   siteConfig: {
@@ -23,7 +28,13 @@ interface HeaderProps {
     href: string;
   }[];
   currentPath: string;
-  lang: any;
+  lang: LocaleCode;
+}
+
+function normalizeNavPath(path: string): string {
+  const withoutLocale = path.replace(/^\/zh-CN(?=\/|$)/, "") || "/";
+  const trimmed = withoutLocale.replace(/\/+$/, "");
+  return trimmed || "/";
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -34,6 +45,7 @@ const Header: React.FC<HeaderProps> = ({
   lang,
 }) => {
   const t = useTranslations(lang);
+  const normalizedCurrent = normalizeNavPath(currentPath);
 
   return (
     <header className="border-b py-4 relative">
@@ -50,15 +62,28 @@ const Header: React.FC<HeaderProps> = ({
             </a>
 
             <nav className="hidden lg:flex items-center space-x-8">
-              {navigation.map((item) => (
-                <a
-                  key={item.href}
-                  href={getRelativeUrl(lang, item.href)}
-                  className="text-base hover:text-primary transition-colors"
-                >
-                  {t(item.label)}
-                </a>
-              ))}
+              {navigation.map((item) => {
+                const target = normalizeNavPath(item.href);
+                const isActive =
+                  normalizedCurrent === target ||
+                  (target !== "/" && normalizedCurrent.startsWith(`${target}/`));
+
+                return (
+                  <a
+                    key={item.href}
+                    href={getRelativeUrl(lang, item.href)}
+                    aria-current={isActive ? "page" : undefined}
+                    className={clsx(
+                      "text-base transition-colors",
+                      isActive
+                        ? "text-primary font-semibold"
+                        : "text-foreground/85 hover:text-primary",
+                    )}
+                  >
+                    {t(item.label)}
+                  </a>
+                );
+              })}
             </nav>
           </div>
 
@@ -85,6 +110,7 @@ const Header: React.FC<HeaderProps> = ({
               target="_blank"
               rel="noopener noreferrer"
               style={{ textDecoration: "none" }}
+              aria-label="GitHub"
             >
               <Button variant="ghost" size="icon" className="h-10 w-10">
                 <Github className="h-5 w-5" />
@@ -92,7 +118,7 @@ const Header: React.FC<HeaderProps> = ({
             </a>
 
             <LangToggle currentPath={currentPath} />
-            <ModeToggle />
+            <ModeToggle lang={lang} />
           </div>
 
           <SidebarToggle

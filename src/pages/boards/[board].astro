@@ -1,16 +1,24 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import SystemsList from "@/components/details/SystemsList.astro";
-import type { BoardSystemSummary } from "@/components/details/types";
-import type { Board } from "@/lib/data";
 import { getSiteData } from "@/lib/data";
-
-interface BoardPageData {
-  board: Board | null;
-  systems: BoardSystemSummary[];
-  error: string | null;
-}
+import {
+  getBoardDetailData,
+  STATUS_BAR_COLOR,
+  STATUS_ORDER,
+} from "@/lib/detail-data";
+import { getLangFromUrl, useTranslations } from "@/i18n/utils";
+import { statusClassMap } from "@/config/site";
+import { getRelativeLocaleUrl } from "astro:i18n";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  Cpu,
+  ExternalLink,
+  Layers,
+  MemoryStick,
+} from "lucide-react";
 
 // Generate static paths for all boards using the cached site data
 export async function getStaticPaths() {
@@ -22,120 +30,219 @@ export async function getStaticPaths() {
 }
 
 const boardId = Astro.params.board;
-const siteData = await getSiteData();
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 
-function buildBoardPageData(boardId: string | undefined): BoardPageData {
-  if (!boardId) {
-    return { board: null, systems: [], error: "Missing board identifier" };
-  }
+const {
+  board,
+  isRuyiSupported,
+  systems,
+  otherEntries,
+  totalSystems,
+  totalReports,
+  statusCounts,
+} = await getBoardDetailData(boardId);
 
-  const board = siteData.boards.get(boardId) ?? null;
-  if (!board) {
-    return {
-      board: null,
-      systems: [],
-      error: `Board information for "${boardId}" not found`,
-    };
-  }
+const error = !boardId
+  ? "Missing board identifier"
+  : !board
+    ? `Board information for "${boardId}" not found`
+    : null;
 
-  const systems: BoardSystemSummary[] = Array.from(board.systems.entries())
-    .map(([systemId, reports]) => {
-      const validReports = reports.filter(
-        (report) => report.sourceType === "report" && report.fileName,
-      );
-
-      if (validReports.length === 0) {
-        return null;
-      }
-
-      const normalizedReports = validReports
-        .map((report) => ({
-          id: `${systemId}-${report.fileName}`,
-          status: report.status,
-          version: report.sys_ver || null,
-          variant: report.sys_var || null,
-          lastUpdate: report.last_update || null,
-          fileName: report.fileName!,
-          systemDir: report.systemDir || systemId,
-        }))
-        .sort((a, b) => {
-          const timeA = a.lastUpdate ? a.lastUpdate.getTime() : 0;
-          const timeB = b.lastUpdate ? b.lastUpdate.getTime() : 0;
-          return timeB - timeA;
-        });
-
-      return {
-        systemId,
-        systemName: siteData.systems.get(systemId)?.name || systemId,
-        reports: normalizedReports,
-      };
-    })
-    .filter((system): system is BoardSystemSummary => Boolean(system))
-    .sort((a, b) => a.systemName.localeCompare(b.systemName));
-
-  return { board, systems, error: null };
-}
-
-const { board, systems, error } = buildBoardPageData(boardId);
 const boardMeta = board?.meta;
 const pageTitle = boardMeta?.product ?? "Board Not Found";
+
+const statusEntries = STATUS_ORDER.map((status) => ({
+  status,
+  count: statusCounts[status] || 0,
+})).filter((item) => item.count > 0);
+
+const totalStatuses = statusEntries.reduce((sum, item) => sum + item.count, 0);
+
+const getCategoryLabel = (category: string) => {
+  if (category === "customized") {
+    return t("category.customized");
+  }
+  return t(category) || category;
+};
 ---
 
 <Layout title={pageTitle}>
-  <div class="container mx-auto">
+  <div class="max-w-5xl mx-auto">
+    <div class="mb-4 flex items-center justify-between">
+      <a
+        href={getRelativeLocaleUrl(lang, "", { normalizeLocale: false })}
+        class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span>{t("detail.back_home")}</span>
+      </a>
+    </div>
+
     {
       error ? (
-        <div class="p-6 border border-red-300 bg-red-50 text-red-700 rounded-md">
-          <h1 class="text-2xl font-bold mb-4">Error</h1>
+        <div class="p-6 border border-destructive/40 bg-destructive/10 text-destructive rounded-xl">
+          <h1 class="text-2xl font-bold mb-2">{t("error")}</h1>
           <p>{error}</p>
         </div>
       ) : (
         <>
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="text-2xl">{boardMeta!.product}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <h3 class="text-sm font-medium text-muted-foreground">
-                      CPU
-                    </h3>
-                    <p class="text-lg">{boardMeta!.cpu}</p>
+          <Card className="mb-8 border-border/80 bg-card flex flex-col gap-0 py-0 overflow-hidden rounded-xl">
+            <div class="p-6 pb-4 space-y-2">
+              <div class="flex items-center justify-between gap-3 min-h-6">
+                <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {boardMeta!.vendor}
+                </span>
+                {isRuyiSupported && (
+                  <span
+                    title={t("card.ruyi_tooltip")}
+                    class="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-secondary/25 dark:bg-primary/15 px-3 py-1 text-xs font-medium text-primary shrink-0"
+                  >
+                    <img src="/favicon.svg" alt="" class="h-4 w-4" />
+                    {t("card.ruyi_badge")}
+                  </span>
+                )}
+              </div>
+              <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-card-foreground">
+                {boardMeta!.product}
+              </h1>
+            </div>
+
+            <div class="px-6 py-4 space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="rounded-lg border border-border/60 bg-muted/25 px-4 py-3">
+                  <div class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Cpu className="h-3.5 w-3.5 shrink-0" />
+                    <span>{t("cpu")}</span>
                   </div>
-                  <div>
-                    <h3 class="text-sm font-medium text-muted-foreground">
-                      RAM
-                    </h3>
-                    <p class="text-lg">{boardMeta!.ram}</p>
+                  <p class="mt-1 text-sm sm:text-base font-medium text-card-foreground break-words">
+                    {boardMeta!.cpu}
+                  </p>
+                </div>
+                <div class="rounded-lg border border-border/60 bg-muted/25 px-4 py-3">
+                  <div class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <MemoryStick className="h-3.5 w-3.5 shrink-0" />
+                    <span>{t("ram")}</span>
                   </div>
-                  <div>
-                    <h3 class="text-sm font-medium text-muted-foreground">
-                      CPU Core
-                    </h3>
-                    <p class="text-lg">{boardMeta!.cpu_core}</p>
+                  <p class="mt-1 text-sm sm:text-base font-medium text-card-foreground break-words">
+                    {boardMeta!.ram}
+                  </p>
+                </div>
+                <div class="rounded-lg border border-border/60 bg-muted/25 px-4 py-3">
+                  <div class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Layers className="h-3.5 w-3.5 shrink-0" />
+                    <span>{t("core")}</span>
                   </div>
+                  <p class="mt-1 text-sm sm:text-base font-medium text-card-foreground break-words">
+                    {boardMeta!.cpu_core}
+                  </p>
                 </div>
               </div>
-            </CardContent>
+
+              {totalStatuses > 0 && (
+                <div class="h-1.5 w-full rounded-full overflow-hidden flex bg-muted">
+                  {statusEntries.map(({ status, count }) => (
+                    <div
+                      class={STATUS_BAR_COLOR[status]}
+                      style={`width: ${(count / totalStatuses) * 100}%`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div class="px-6 py-3.5 border-t border-border/60 bg-muted/30 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div class="flex flex-wrap items-center gap-2.5">
+                <span class="text-muted-foreground">
+                  {totalSystems} {t("card.systems")} · {totalReports}{" "}
+                  {t("card.reports")}
+                </span>
+                {statusEntries.length > 0 && (
+                  <div class="flex flex-wrap items-center gap-1">
+                    {statusEntries.map(({ status, count }) => (
+                      <span
+                        class={`inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-semibold leading-none ${statusClassMap[status] ?? statusClassMap.UNKNOWN}`}
+                      >
+                        {status} {count}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div class="flex items-center gap-1.5 text-muted-foreground">
+                <span>{t("detail.source")}:</span>
+                <a
+                  href={`https://github.com/ruyisdk/support-matrix/blob/main/${boardId}/README.md`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                >
+                  <span>{t("detail.support_matrix")}</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            </div>
           </Card>
 
-          <SystemsList boardId={boardId!} systems={systems} />
+          {(systems.length > 0 || otherEntries.length === 0) && (
+            <SystemsList boardId={boardId!} systems={systems} />
+          )}
 
-          <div class="mt-8">
-            <p class="text-sm text-muted-foreground">
-              Source:
-              <a
-                href={`https://github.com/ruyisdk/support-matrix/blob/main/${boardId}/README.md`}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-primary hover:underline"
-              >
-                Support Matrix
-              </a>
-            </p>
-          </div>
+          {otherEntries.length > 0 && (
+            <Card className="mt-8 border-border/80 bg-card flex flex-col gap-0 py-0 overflow-hidden rounded-xl">
+              <div class="p-5 pb-3 border-b border-border/60 bg-muted/20">
+                <h2 class="text-base font-semibold text-card-foreground">
+                  {t("detail.other_systems")}
+                </h2>
+              </div>
+              <div class="p-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {otherEntries.map((entry) => {
+                    const statusClass =
+                      statusClassMap[entry.status] ?? statusClassMap.UNKNOWN;
+                    return (
+                      <a
+                        href={getRelativeLocaleUrl(
+                          lang,
+                          `systems/${entry.systemId}`,
+                          { normalizeLocale: false },
+                        )}
+                        class="group flex items-start justify-between gap-3 rounded-lg border border-border/70 bg-muted/15 p-3.5 hover:border-primary/40 hover:bg-accent/50 transition-all"
+                      >
+                        <div class="min-w-0 space-y-1.5">
+                          <span class="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                            {getCategoryLabel(entry.category)}
+                          </span>
+                          <p class="text-sm font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1 truncate">
+                            <span class="truncate">{entry.systemName}</span>
+                            <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0 group-hover:text-primary transition-colors" />
+                          </p>
+                          {(entry.version || entry.variant) && (
+                            <p class="text-xs text-muted-foreground">
+                              {[entry.version, entry.variant]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </p>
+                          )}
+                          {entry.provider && (
+                            <p class="text-xs text-muted-foreground">
+                              {t("table.provider")}: {entry.provider}
+                            </p>
+                          )}
+                        </div>
+                        <span
+                          class={`inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-semibold leading-none shrink-0 ${statusClass}`}
+                        >
+                          {entry.status}
+                        </span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            </Card>
+          )}
         </>
       )
     }

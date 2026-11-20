@@ -25,6 +25,7 @@ export interface ReportMetaData {
   systemDir: string; // Report's system's 'dir'
   sourceType: "report" | "other"; // A flag to distinguish the source
   fileName: string | null; // The original .md file name, for variant system
+  provider?: string | null; // Optional provider (e.g. from others.yml)
 }
 
 // For a single Board
@@ -324,6 +325,7 @@ async function loadReportsFromMarkdown(): Promise<
           boardId,
           systemDir,
           fileName,
+          provider: null,
         };
       } catch (error) {
         console.error(`Error loading report from ${path}:`, error);
@@ -367,11 +369,12 @@ async function loadReportsFromOthersYml(): Promise<
           sys: item.sys,
           sys_ver: item.sys_ver || null,
           sys_var: item.sys_var || null,
-          status: item.status.toUpperCase() as ReportStatus,
+          status: (item.status ? String(item.status).toUpperCase() : "") as ReportStatus,
           last_update: null,
           systemDir: "",
           boardId,
           fileName: null,
+          provider: item.provider || null,
         }));
       } catch (error) {
         console.error(`Error loading others.yml from ${path}:`, error);

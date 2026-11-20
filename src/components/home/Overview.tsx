@@ -1,25 +1,22 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import SortDropdown from "./SortDropdown";
 import type { SortOption } from "./SortDropdown";
 import { Input } from "../ui/input";
-import { Search as SearchIcon } from "lucide-react";
-import { useTranslations } from "@/i18n/utils";
-import { getRuyiDeviceVendor } from "@/lib/package-index";
-import type { BoardMetaData } from "@/lib/data";
-import { ui } from "@/i18n/ui";
-import { Button } from "../ui/button";
+import { Search as SearchIcon, X } from "lucide-react";
+import { useTranslations, type LocaleCode } from "@/i18n/utils";
 import BoardsCard from "./BoardsCard";
 import SystemsCard from "./SystemsCard";
-import type { OverviewSystemSummary } from "./types";
+import type { OverviewBoardSummary, OverviewSystemSummary } from "./types";
+import clsx from "clsx";
 
 interface Props {
-  boards: BoardMetaData[];
+  boards: OverviewBoardSummary[];
   systems: OverviewSystemSummary[];
-  lang: keyof typeof ui;
+  lang: LocaleCode;
 }
 
 type View = "boards" | "systems";
-type SortField = "vendor" | "product" | "systemName";
+type SortField = "vendor" | "product" | "systemCount" | "systemName" | "boardCount";
 
 interface GenericSortOption extends SortOption {
   field: SortField;
@@ -33,16 +30,9 @@ const Overview: React.FC<Props> = ({
 }) => {
   const t = useTranslations(lang);
 
-  const [deviceNames, setDeviceNames] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [view, setView] = useState<View>("boards");
   const [currentSortId, setCurrentSortId] = useState<string>("vendor-asc");
-
-  useEffect(() => {
-    getRuyiDeviceVendor().then((names) => {
-      setDeviceNames(names);
-    });
-  }, []);
 
   const boardSortOptions: GenericSortOption[] = useMemo(
     () => [
@@ -51,72 +41,90 @@ const Overview: React.FC<Props> = ({
         label: t("sort.ruyi"),
         field: "vendor",
         direction: "asc",
-        sortFn: (a, b) => {
-          const vendorA = a.vendor?.toLowerCase() || "";
-          const vendorB = b.vendor?.toLowerCase() || "";
-          const isDeviceA = deviceNames.includes(vendorA);
-          const isDeviceB = deviceNames.includes(vendorB);
-          if (isDeviceA === isDeviceB) {
-            return (a.product || "").localeCompare(b.product || "");
+        sortFn: (a: OverviewBoardSummary, b: OverviewBoardSummary) => {
+          if (a.isRuyiSupported !== b.isRuyiSupported) {
+            return a.isRuyiSupported ? -1 : 1;
           }
-          return isDeviceA ? -1 : 1;
+          return (a.product || "").localeCompare(b.product || "");
         },
+      },
+      {
+        id: "most-systems",
+        label: t("sort.most_systems"),
+        field: "systemCount",
+        direction: "desc",
+        sortFn: (a: OverviewBoardSummary, b: OverviewBoardSummary) =>
+          b.systemCount - a.systemCount ||
+          (a.product || "").localeCompare(b.product || ""),
       },
       {
         id: "product-asc",
         label: t("sort.asc"),
         field: "product",
         direction: "asc",
-        sortFn: (a, b) => (a.product || "").localeCompare(b.product || ""),
+        sortFn: (a: OverviewBoardSummary, b: OverviewBoardSummary) =>
+          (a.product || "").localeCompare(b.product || ""),
       },
       {
         id: "product-desc",
         label: t("sort.desc"),
         field: "product",
         direction: "desc",
-        sortFn: (a, b) => (b.product || "").localeCompare(a.product || ""),
+        sortFn: (a: OverviewBoardSummary, b: OverviewBoardSummary) =>
+          (b.product || "").localeCompare(a.product || ""),
       },
     ],
-    [deviceNames, t],
+    [t],
   );
 
   const systemSortOptions: GenericSortOption[] = useMemo(
     () => [
       {
+        id: "most-boards",
+        label: t("sort.most_boards"),
+        field: "boardCount",
+        direction: "desc",
+        sortFn: (a: OverviewSystemSummary, b: OverviewSystemSummary) =>
+          b.boards.length - a.boards.length || a.name.localeCompare(b.name),
+      },
+      {
         id: "system-name-asc",
         label: t("sort.asc"),
         field: "systemName",
         direction: "asc",
-        sortFn: (a, b) => a.name.localeCompare(b.name),
+        sortFn: (a: OverviewSystemSummary, b: OverviewSystemSummary) =>
+          a.name.localeCompare(b.name),
       },
       {
         id: "system-name-desc",
         label: t("sort.desc"),
         field: "systemName",
         direction: "desc",
-        sortFn: (a, b) => b.name.localeCompare(a.name),
+        sortFn: (a: OverviewSystemSummary, b: OverviewSystemSummary) =>
+          b.name.localeCompare(a.name),
       },
     ],
     [t],
   );
 
   const currentSort = useMemo(() => {
-    const allOptions = [...boardSortOptions, ...systemSortOptions];
+    const activeOptions =
+      view === "boards" ? boardSortOptions : systemSortOptions;
     return (
-      allOptions.find((opt) => opt.id === currentSortId) || boardSortOptions[0]
+      activeOptions.find((opt) => opt.id === currentSortId) || activeOptions[0]
     );
-  }, [currentSortId, boardSortOptions, systemSortOptions]);
+  }, [view, currentSortId, boardSortOptions, systemSortOptions]);
 
-  const sortItems = (items: any[], sortOption: GenericSortOption) => {
+  const sortItems = <T,>(items: T[], sortOption: GenericSortOption): T[] => {
     if (sortOption.sortFn) {
       return [...items].sort(sortOption.sortFn);
     }
-    return [...items].sort((a, b) => {
+    return [...items].sort((a: any, b: any) => {
       const valueA = a[sortOption.field] || "";
       const valueB = b[sortOption.field] || "";
       return sortOption.direction === "asc"
-        ? valueA.localeCompare(valueB)
-        : valueB.localeCompare(valueA);
+        ? String(valueA).localeCompare(String(valueB))
+        : String(valueB).localeCompare(String(valueA));
     });
   };
 
@@ -129,9 +137,12 @@ const Overview: React.FC<Props> = ({
     if (normalizedQuery) {
       filteredBoards = initialBoards.filter((board) => {
         const product = board.product.toLowerCase();
+        const vendor = board.vendor.toLowerCase();
         const cpu = board.cpu.toLowerCase();
         const cpuCore = board.cpu_core.toLowerCase();
-        return [product, cpu, cpuCore].some((attr) =>
+        const ram = board.ram.toLowerCase();
+        const dir = board.dir.toLowerCase();
+        return [product, vendor, cpu, cpuCore, ram, dir].some((attr) =>
           attr.includes(normalizedQuery),
         );
       });
@@ -161,37 +172,22 @@ const Overview: React.FC<Props> = ({
 
   const sortedData = useMemo(() => {
     const { filteredBoards, filteredSystems } = filteredData;
-    const isBoardSort = ["vendor", "product"].includes(currentSort.field);
 
-    let sortedBoards: BoardMetaData[];
-    let sortedSystems: OverviewSystemSummary[];
+    const sortedBoards =
+      view === "boards"
+        ? sortItems(filteredBoards, currentSort)
+        : sortItems(filteredBoards, boardSortOptions[0]);
 
-    if (isBoardSort) {
-      sortedBoards = sortItems(filteredBoards, currentSort) as BoardMetaData[];
-      sortedSystems = sortItems(
-        filteredSystems,
-        systemSortOptions[0],
-      ) as OverviewSystemSummary[];
-    } else {
-      sortedBoards = sortItems(
-        filteredBoards,
-        boardSortOptions[0],
-      ) as BoardMetaData[];
-      sortedSystems = sortItems(
-        filteredSystems,
-        currentSort,
-      ) as OverviewSystemSummary[];
-    }
+    const sortedSystems =
+      view === "systems"
+        ? sortItems(filteredSystems, currentSort)
+        : sortItems(filteredSystems, systemSortOptions[0]);
 
     return { sortedBoards, sortedSystems };
-  }, [filteredData, currentSort, boardSortOptions, systemSortOptions]);
+  }, [filteredData, view, currentSort, boardSortOptions, systemSortOptions]);
 
   const { sortedBoards: visibleBoards, sortedSystems: visibleSystems } =
     sortedData;
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
 
   const handleSortChange = (sortOption: SortOption) => {
     setCurrentSortId(sortOption.id);
@@ -202,7 +198,7 @@ const Overview: React.FC<Props> = ({
     if (newView === "boards") {
       setCurrentSortId("vendor-asc");
     } else {
-      setCurrentSortId("system-name-asc");
+      setCurrentSortId("most-boards");
     }
   };
 
@@ -212,39 +208,75 @@ const Overview: React.FC<Props> = ({
 
   return (
     <div>
-      <div className="max-w-xl w-full mx-auto md:my-16 my-8">
+      <div className="max-w-xl w-full mx-auto mt-6 mb-10">
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <SearchIcon className="h-6 w-6 text-muted-foreground" />
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <SearchIcon className="h-5 w-5 text-muted-foreground" />
           </div>
           <Input
             type="text"
             value={searchQuery}
-            onChange={handleSearch}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("search_placeholder") || "Search..."}
-            className="pl-12 py-6 w-full text-lg rounded-md border border-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="h-12 pl-11 pr-10 w-full text-base rounded-xl border-border/80 bg-card/90 shadow-xs"
             aria-label="Search"
             autoComplete="off"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              aria-label="Clear search"
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <Button
-            variant={view === "boards" ? "secondary" : "ghost"}
+      <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+        <div
+          role="tablist"
+          aria-label="View mode"
+          className="inline-flex items-center rounded-lg border border-border/80 bg-muted/60 p-1"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={view === "boards"}
             onClick={() => handleViewChange("boards")}
-            className="mr-2"
+            className={clsx(
+              "inline-flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-sm font-medium transition-all cursor-pointer",
+              view === "boards"
+                ? "bg-card text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground",
+            )}
           >
-            {t("board")}
-          </Button>
-          <Button
-            variant={view === "systems" ? "secondary" : "ghost"}
+            <span>{t("board")}</span>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              ({visibleBoards.length})
+            </span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={view === "systems"}
             onClick={() => handleViewChange("systems")}
+            className={clsx(
+              "inline-flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-sm font-medium transition-all cursor-pointer",
+              view === "systems"
+                ? "bg-card text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground",
+            )}
           >
-            {t("system")}
-          </Button>
+            <span>{t("system")}</span>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              ({visibleSystems.length})
+            </span>
+          </button>
         </div>
+
         <SortDropdown
           options={view === "boards" ? boardSortOptions : systemSortOptions}
           currentSort={currentSort}
@@ -253,7 +285,7 @@ const Overview: React.FC<Props> = ({
       </div>
 
       {!hasResults && (
-        <div className="text-center p-8 border rounded-lg mt-8">
+        <div className="text-center p-10 border border-border/80 rounded-xl bg-card/50 mt-6">
           <p className="text-muted-foreground">
             {t("no_results") || "No results found."}
           </p>
@@ -261,11 +293,7 @@ const Overview: React.FC<Props> = ({
       )}
 
       {hasResults && view === "boards" && (
-        <BoardsCard
-          boards={visibleBoards}
-          deviceNames={deviceNames}
-          lang={lang}
-        />
+        <BoardsCard boards={visibleBoards} lang={lang} />
       )}
 
       {hasResults && view === "systems" && (

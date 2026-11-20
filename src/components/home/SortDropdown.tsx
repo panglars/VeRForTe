@@ -6,7 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
-import { ArrowDownWideNarrow, ChevronDown } from "lucide-react";
+import { ArrowDownWideNarrow, Check, ChevronDown } from "lucide-react";
 
 export interface SortOption {
   id: string;
@@ -27,27 +27,31 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
   currentSort,
   onSortChange,
 }) => {
-  const handleSortChange = (option: SortOption) => {
-    onSortChange(option);
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="flex justify-between w-48">
-          <ArrowDownWideNarrow className="h-4 w-4" />
-          <span>{currentSort.label}</span>
-          <ChevronDown className="h-4 w-4" />
+        <Button
+          variant="outline"
+          className="flex items-center justify-between gap-2 min-w-48 w-auto"
+        >
+          <span className="flex items-center gap-2">
+            <ArrowDownWideNarrow className="h-4 w-4 text-muted-foreground" />
+            <span>{currentSort.label}</span>
+          </span>
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" className="min-w-48">
         {options.map((option) => (
           <DropdownMenuItem
             key={option.id}
-            onClick={() => handleSortChange(option)}
-            className="flex items-center justify-between"
+            onClick={() => onSortChange(option)}
+            className="flex items-center justify-between gap-3 cursor-pointer"
           >
-            {option.label}
+            <span>{option.label}</span>
+            {option.id === currentSort.id && (
+              <Check className="h-4 w-4 text-primary" />
+            )}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

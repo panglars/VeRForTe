@@ -1,5 +1,5 @@
 import { i18n, trailingSlash } from "astro:config/client";
-import { ui, defaultLang, languages } from "./ui";
+import { ui, defaultLang } from "./ui";
 
 export type LocaleCode = keyof typeof ui;
 type TranslationDictionary = Record<keyof (typeof ui)[typeof defaultLang], string>;

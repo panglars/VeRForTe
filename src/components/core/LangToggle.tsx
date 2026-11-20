@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Languages } from "lucide-react";
+import { Check, Languages } from "lucide-react";
 import { useAtom } from "jotai";
 
 import { Button } from "@/components/ui/button";
@@ -16,20 +16,7 @@ interface LangToggleProps {
 }
 
 export const LangToggle: React.FC<LangToggleProps> = ({ currentPath }) => {
-  const [mounted, setMounted] = React.useState(false);
   const [theme] = useAtom(themeAtom);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <Button variant="ghost" size="icon" aria-label="Switch language">
-        <Languages className="h-5 w-5" />
-      </Button>
-    );
-  }
 
   const isZhCN = currentPath.startsWith("/zh-CN/") || currentPath === "/zh-CN";
 
@@ -56,11 +43,19 @@ export const LangToggle: React.FC<LangToggleProps> = ({ currentPath }) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => switchToLanguage("en")}>
-          English
+        <DropdownMenuItem
+          onClick={() => switchToLanguage("en")}
+          className="flex items-center justify-between gap-3 cursor-pointer"
+        >
+          <span>English</span>
+          {!isZhCN && <Check className="h-4 w-4 text-primary" />}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => switchToLanguage("zh-CN")}>
-          中文
+        <DropdownMenuItem
+          onClick={() => switchToLanguage("zh-CN")}
+          className="flex items-center justify-between gap-3 cursor-pointer"
+        >
+          <span>中文</span>
+          {isZhCN && <Check className="h-4 w-4 text-primary" />}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

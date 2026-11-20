@@ -45,7 +45,7 @@ export const isDarkAtom = atom((get) => {
 // Write-only atom for theme actions with side effects
 export const setThemeAtom = atom(
   null,
-  (get, set, newTheme: Theme) => {
+  (_get, set, newTheme: Theme) => {
     set(themeAtom, newTheme);
     
     // Apply theme to document element

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Moon, Sun } from "lucide-react";
+import { Check, Moon, Sun } from "lucide-react";
 import { useAtom, useSetAtom } from "jotai";
 
 import { Button } from "@/components/ui/button";
@@ -10,17 +10,39 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { themeAtom, setThemeAtom } from "@/lib/atom";
+import { useTranslations, type LocaleCode } from "@/i18n/utils";
 
-export function ModeToggle() {
+interface ModeToggleProps {
+  lang?: LocaleCode;
+}
+
+export function ModeToggle({ lang = "en" }: ModeToggleProps) {
   const [theme] = useAtom(themeAtom);
   const setTheme = useSetAtom(setThemeAtom);
+  const t = useTranslations(lang);
 
-  // Apply the hydrated value without overwriting storage with the SSR default.
+  // Apply hydrated theme and react to OS color-scheme changes in system mode.
   React.useEffect(() => {
-    const isDark = theme === "dark" ||
-      (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-    document.documentElement.classList.toggle("dark", isDark);
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const syncDarkClass = () => {
+      const isDark =
+        theme === "dark" || (theme === "system" && mediaQuery.matches);
+      document.documentElement.classList.toggle("dark", isDark);
+    };
+
+    syncDarkClass();
+
+    if (theme === "system") {
+      mediaQuery.addEventListener("change", syncDarkClass);
+      return () => mediaQuery.removeEventListener("change", syncDarkClass);
+    }
   }, [theme]);
+
+  const options = [
+    { value: "theme-light" as const, label: t("theme.light") },
+    { value: "dark" as const, label: t("theme.dark") },
+    { value: "system" as const, label: t("theme.system") },
+  ];
 
   return (
     <DropdownMenu>
@@ -32,15 +54,18 @@ export function ModeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("theme-light")}>
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
-        </DropdownMenuItem>
+        {options.map((option) => (
+          <DropdownMenuItem
+            key={option.value}
+            onClick={() => setTheme(option.value)}
+            className="flex items-center justify-between gap-3 cursor-pointer"
+          >
+            <span>{option.label}</span>
+            {theme === option.value && (
+              <Check className="h-4 w-4 text-primary" />
+            )}
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

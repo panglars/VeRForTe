@@ -2,6 +2,8 @@
 import Layout from "@/layouts/Layout.astro";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { getSiteData } from "@/lib/data";
+import { statusClassMap } from "@/config/site";
+import { getRelativeLocaleUrl } from "astro:i18n";
 
 const reportMarkdownFiles = import.meta.glob("/support-matrix/**/*.md");
 
@@ -50,21 +52,23 @@ interface PageState {
     status: string;
     lastUpdate: Date | null;
   } | null;
+  usedZhFile: boolean;
   error: string | null;
   content: any;
 }
 
 async function loadPageState(): Promise<PageState> {
   const boardId = params.board;
-  const systemId = params.system;
+  const systemDir = params.system;
   const fileName = params.file;
 
-  if (!boardId || !systemId || !fileName) {
+  if (!boardId || !systemDir || !fileName) {
     return {
       boardName: null,
       systemId: null,
       systemName: null,
       report: null,
+      usedZhFile: false,
       error: "缺少报告参数",
       content: null,
     };
@@ -73,17 +77,21 @@ async function loadPageState(): Promise<PageState> {
   const board = siteData.boards.get(boardId);
   // Route directories (e.g. Ubuntu) differ from metadata IDs (ubuntu).
   const report = siteData.allReports.find(
-    (item) => item.boardId === boardId && item.systemDir === systemId
-      && item.fileName === fileName && item.sourceType === "report",
+    (item) =>
+      item.boardId === boardId &&
+      item.systemDir === systemDir &&
+      item.fileName === fileName &&
+      item.sourceType === "report",
   );
   const system = report ? siteData.systems.get(report.sys) : undefined;
 
   if (!board) {
     return {
       boardName: null,
-      systemId,
-      systemName: system?.name ?? systemId,
+      systemId: system?.id ?? null,
+      systemName: system?.name ?? systemDir,
       report: null,
+      usedZhFile: false,
       error: `未找到开发板 ${boardId} 的信息`,
       content: null,
     };
@@ -92,10 +100,11 @@ async function loadPageState(): Promise<PageState> {
   if (!system) {
     return {
       boardName: board.meta.product,
-      systemId,
-      systemName: systemId,
+      systemId: null,
+      systemName: systemDir,
       report: null,
-      error: `未找到系统 ${systemId} 的信息`,
+      usedZhFile: false,
+      error: `未找到系统 ${systemDir} 的信息`,
       content: null,
     };
   }
@@ -103,30 +112,34 @@ async function loadPageState(): Promise<PageState> {
   if (!report || report.sourceType !== "report") {
     return {
       boardName: board.meta.product,
-      systemId,
+      systemId: system.id,
       systemName: system.name,
       report: null,
+      usedZhFile: false,
       error: `未找到 ${system.name} 的报告 ${fileName}`,
       content: null,
     };
   }
 
-  const zhMarkdownPath = `/support-matrix/${boardId}/${systemId}/${fileName}_zh.md`;
-  const defaultMarkdownPath = `/support-matrix/${boardId}/${systemId}/${fileName}.md`;
+  const zhMarkdownPath = `/support-matrix/${boardId}/${systemDir}/${fileName}_zh.md`;
+  const defaultMarkdownPath = `/support-matrix/${boardId}/${systemDir}/${fileName}.md`;
 
   let Content: any = null;
+  let usedZhFile = false;
   if (reportMarkdownFiles[zhMarkdownPath]) {
     const module = await reportMarkdownFiles[zhMarkdownPath]();
     Content = (module as any).Content;
+    usedZhFile = true;
   } else if (reportMarkdownFiles[defaultMarkdownPath]) {
     const module = await reportMarkdownFiles[defaultMarkdownPath]();
     Content = (module as any).Content;
   } else {
     return {
       boardName: board.meta.product,
-      systemId,
+      systemId: system.id,
       systemName: system.name,
       report: null,
+      usedZhFile: false,
       error: `无法找到报告文件：${zhMarkdownPath}`,
       content: null,
     };
@@ -134,7 +147,7 @@ async function loadPageState(): Promise<PageState> {
 
   return {
     boardName: board.meta.product,
-    systemId,
+    systemId: system.id,
     systemName: system.name,
     report: {
       version: report.sys_ver || null,
@@ -142,6 +155,7 @@ async function loadPageState(): Promise<PageState> {
       status: report.status,
       lastUpdate: report.last_update || null,
     },
+    usedZhFile,
     error: null,
     content: Content,
   };
@@ -152,6 +166,11 @@ const title =
   pageState.boardName && pageState.systemName
     ? `${pageState.systemName} 在 ${pageState.boardName} 上的测试报告`
     : "未找到该系统";
+const statusClass =
+  statusClassMap[pageState.report?.status ?? ""] ?? statusClassMap.UNKNOWN;
+const sourceFileName = pageState.usedZhFile
+  ? `${params.file}_zh.md`
+  : `${params.file}.md`;
 ---
 
 <Layout title={title}>
@@ -164,48 +183,85 @@ const title =
         </div>
       ) : (
         <>
-          <Card className="mb-8">
+          <Card className="mb-8 border-border/80 bg-card">
             <CardHeader>
-              <CardTitle className="text-2xl">
-                {pageState.systemName} @ {pageState.boardName} 测试报告
+              <CardTitle className="text-2xl flex flex-wrap items-center gap-2">
+                {pageState.systemId ? (
+                  <a
+                    href={getRelativeLocaleUrl(
+                      "zh-CN",
+                      `systems/${pageState.systemId}`,
+                      { normalizeLocale: false },
+                    )}
+                    class="hover:text-primary transition-colors"
+                  >
+                    {pageState.systemName}
+                  </a>
+                ) : (
+                  <span>{pageState.systemName}</span>
+                )}
+                <span class="text-muted-foreground font-normal">@</span>
+                <a
+                  href={getRelativeLocaleUrl(
+                    "zh-CN",
+                    `boards/${params.board}`,
+                    { normalizeLocale: false },
+                  )}
+                  class="hover:text-primary transition-colors"
+                >
+                  {pageState.boardName}
+                </a>
+                <span class="text-muted-foreground font-normal">
+                  测试报告
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 pb-6 border-b border-border/60">
                   <div>
                     <h3 class="text-sm font-medium text-muted-foreground">
                       支持状态
                     </h3>
-                    <p class="text-lg">{pageState.report?.status ?? "-"}</p>
+                    <div class="mt-1">
+                      <span
+                        class={`inline-flex items-center px-2.5 py-0.5 rounded-md font-semibold text-sm ${statusClass}`}
+                      >
+                        {pageState.report?.status ?? "-"}
+                      </span>
+                    </div>
                   </div>
                   <div>
                     <h3 class="text-sm font-medium text-muted-foreground">
                       系统版本
                     </h3>
-                    <p class="text-lg">{pageState.report?.version ?? "-"}</p>
+                    <p class="text-lg mt-0.5">
+                      {pageState.report?.version ?? "-"}
+                    </p>
                   </div>
                   {pageState.report?.variant && (
                     <div>
                       <h3 class="text-sm font-medium text-muted-foreground">
                         系统变种
                       </h3>
-                      <p class="text-lg">{pageState.report.variant}</p>
+                      <p class="text-lg mt-0.5">{pageState.report.variant}</p>
                     </div>
                   )}
                   <div>
                     <h3 class="text-sm font-medium text-muted-foreground">
                       最后更新
                     </h3>
-                    <p class="text-lg">
+                    <p class="text-lg mt-0.5">
                       {pageState.report?.lastUpdate
-                        ? pageState.report.lastUpdate.toLocaleDateString()
+                        ? pageState.report.lastUpdate.toLocaleDateString(
+                            "zh-CN",
+                          )
                         : "-"}
                     </p>
                   </div>
                 </div>
                 <div
-                  class="prose prose-slate prose-h1:hidden dark:prose-invert max-w-none 
+                  class="prose prose-slate prose-h1:hidden dark:prose-invert max-w-none
             prose-pre:whitespace-pre-wrap prose-pre:word-break-normal prose-pre:break-words
             prose-a:break-words prose-a:overflow-wrap-anywhere prose-a:word-break-all"
                 >
@@ -223,10 +279,10 @@ const title =
             <p class="text-sm text-muted-foreground">
               来源:
               <a
-                href={`https://github.com/ruyisdk/support-matrix/blob/main/${params.board}/${params.system}/${params.file}_zh.md`}
+                href={`https://github.com/ruyisdk/support-matrix/blob/main/${params.board}/${params.system}/${sourceFileName}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="text-primary hover:underline"
+                class="text-primary hover:underline ml-1"
               >
                 支持矩阵
               </a>

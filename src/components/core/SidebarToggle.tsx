@@ -4,7 +4,12 @@ import { Menu, X, ExternalLink, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./ModeToggle";
 import { LangToggle } from "./LangToggle";
-import { useTranslations, getRelativeUrl } from "@/i18n/utils";
+import {
+  useTranslations,
+  getRelativeUrl,
+  type LocaleCode,
+} from "@/i18n/utils";
+import clsx from "clsx";
 
 interface SidebarToggleProps {
   navigation: {
@@ -17,7 +22,13 @@ interface SidebarToggleProps {
   }[];
   github: string;
   currentPath: string;
-  lang: any;
+  lang: LocaleCode;
+}
+
+function normalizeNavPath(path: string): string {
+  const withoutLocale = path.replace(/^\/zh-CN(?=\/|$)/, "") || "/";
+  const trimmed = withoutLocale.replace(/\/+$/, "");
+  return trimmed || "/";
 }
 
 const SidebarToggle: React.FC<SidebarToggleProps> = ({
@@ -28,6 +39,7 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({
   lang,
 }) => {
   const t = useTranslations(lang);
+  const normalizedCurrent = normalizeNavPath(currentPath);
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -119,28 +131,41 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({
           <div className="flex-1 overflow-y-auto">
             {/* Internal Navigation Links */}
             <nav className="p-4 space-y-1">
-              {navigation.map((item) => (
-                <a
-                  key={item.href}
-                  href={getRelativeUrl(lang, item.href)}
-                  className="block text-base py-3 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-                  onClick={closeSidebar}
-                >
-                  {t(item.label)}
-                </a>
-              ))}
+              {navigation.map((item) => {
+                const target = normalizeNavPath(item.href);
+                const isActive =
+                  normalizedCurrent === target ||
+                  (target !== "/" && normalizedCurrent.startsWith(`${target}/`));
+
+                return (
+                  <a
+                    key={item.href}
+                    href={getRelativeUrl(lang, item.href)}
+                    aria-current={isActive ? "page" : undefined}
+                    className={clsx(
+                      "block text-base py-3 px-3 rounded-md transition-colors",
+                      isActive
+                        ? "bg-accent text-primary font-semibold"
+                        : "hover:bg-accent hover:text-accent-foreground",
+                    )}
+                    onClick={closeSidebar}
+                  >
+                    {t(item.label)}
+                  </a>
+                );
+              })}
             </nav>
 
             {/* External Links */}
             {externalLinks.length > 0 && (
-              <nav className="px-4 pb-4 space-y-1 border-t">
+              <nav className="px-4 py-4 space-y-1 border-t">
                 {externalLinks.map((link) => (
                   <a
                     key={link.href}
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block text-base py-3 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2"
+                    className="flex text-base py-3 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors items-center gap-2"
                     onClick={closeSidebar}
                   >
                     {t(link.label)}
@@ -153,13 +178,14 @@ const SidebarToggle: React.FC<SidebarToggleProps> = ({
             {/* Sidebar Controls */}
             <div className="border-t p-4">
               <div className="flex items-center justify-center space-x-3">
-                <ModeToggle />
+                <ModeToggle lang={lang} />
                 <LangToggle currentPath={currentPath} />
                 <a
                   href={github}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ textDecoration: "none" }}
+                  aria-label="GitHub"
                 >
                   <Button variant="ghost" size="icon" className="h-10 w-10">
                     <Github className="h-5 w-5" />

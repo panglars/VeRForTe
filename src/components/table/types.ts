@@ -9,7 +9,7 @@ export interface ReportSummary {
   status: ReportStatus;
   version: string | null;
   variant: string | null;
-  lastUpdate: Date | null;
+  lastUpdate: string | null;
 }
 
 export interface OtherSummary {
@@ -17,7 +17,10 @@ export interface OtherSummary {
   systemDir: string;
   boardId: string;
   status: ReportStatus;
-  lastUpdate: Date | null;
+  version: string | null;
+  variant: string | null;
+  provider: string | null;
+  lastUpdate: string | null;
 }
 
 export interface CellData {
@@ -30,11 +33,13 @@ export type MatrixData = Record<string, Record<string, CellData>>;
 export interface SystemDefinition {
   id: string;
   name: string;
+  category: string;
 }
 
 export interface BoardDefinition {
   id: string;
   meta: BoardMetaData;
+  isRuyiSupported: boolean;
 }
 
 export interface BoardRow extends BoardDefinition {

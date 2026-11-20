@@ -2,6 +2,8 @@
 import Layout from "@/layouts/Layout.astro";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { getSiteData } from "@/lib/data";
+import { statusClassMap } from "@/config/site";
+import { getRelativeLocaleUrl } from "astro:i18n";
 
 const reportMarkdownFiles = import.meta.glob("/support-matrix/**/*.md");
 
@@ -42,6 +44,7 @@ const siteData = await getSiteData();
 
 interface PageState {
   boardName: string | null;
+  systemId: string | null;
   systemDir: string | null;
   systemName: string | null;
   report: {
@@ -62,6 +65,7 @@ async function loadPageState(): Promise<PageState> {
   if (!boardId || !systemDir || !fileName) {
     return {
       boardName: null,
+      systemId: null,
       systemDir: null,
       systemName: null,
       report: null,
@@ -73,14 +77,18 @@ async function loadPageState(): Promise<PageState> {
   const board = siteData.boards.get(boardId);
   // Route directories (e.g. Ubuntu) differ from metadata IDs (ubuntu).
   const report = siteData.allReports.find(
-    (item) => item.boardId === boardId && item.systemDir === systemDir
-      && item.fileName === fileName && item.sourceType === "report",
+    (item) =>
+      item.boardId === boardId &&
+      item.systemDir === systemDir &&
+      item.fileName === fileName &&
+      item.sourceType === "report",
   );
   const system = report ? siteData.systems.get(report.sys) : undefined;
 
   if (!board) {
     return {
       boardName: null,
+      systemId: system?.id ?? null,
       systemDir: systemDir,
       systemName: system?.name ?? systemDir,
       report: null,
@@ -92,6 +100,7 @@ async function loadPageState(): Promise<PageState> {
   if (!system) {
     return {
       boardName: board.meta.product,
+      systemId: null,
       systemDir: systemDir,
       systemName: systemDir,
       report: null,
@@ -103,6 +112,7 @@ async function loadPageState(): Promise<PageState> {
   if (!report || report.sourceType !== "report") {
     return {
       boardName: board.meta.product,
+      systemId: system.id,
       systemDir: systemDir,
       systemName: system.name,
       report: null,
@@ -116,6 +126,7 @@ async function loadPageState(): Promise<PageState> {
   if (!reportMarkdownFiles[markdownPath]) {
     return {
       boardName: board.meta.product,
+      systemId: system.id,
       systemDir: systemDir,
       systemName: system.name,
       report: null,
@@ -129,6 +140,7 @@ async function loadPageState(): Promise<PageState> {
 
   return {
     boardName: board.meta.product,
+    systemId: system.id,
     systemDir: systemDir,
     systemName: system.name,
     report: {
@@ -147,6 +159,8 @@ const title =
   pageState.boardName && pageState.systemName
     ? `${pageState.systemName} on ${pageState.boardName} Test Report`
     : "System Not Found";
+const statusClass =
+  statusClassMap[pageState.report?.status ?? ""] ?? statusClassMap.UNKNOWN;
 ---
 
 <Layout title={title}>
@@ -154,53 +168,88 @@ const title =
     {
       pageState.error ? (
         <div class="p-6 border border-red-300 bg-red-50 text-red-700 rounded-md">
-          <h1 class="text-2xl	font-bold mb-4">Error</h1>
+          <h1 class="text-2xl font-bold mb-4">Error</h1>
           <p>{pageState.error}</p>
         </div>
       ) : (
         <>
-          <Card className="mb-8">
+          <Card className="mb-8 border-border/80 bg-card">
             <CardHeader>
-              <CardTitle className="text-2xl">
-                {pageState.systemName} @ {pageState.boardName} Test Report
+              <CardTitle className="text-2xl flex flex-wrap items-center gap-2">
+                {pageState.systemId ? (
+                  <a
+                    href={getRelativeLocaleUrl(
+                      "en",
+                      `systems/${pageState.systemId}`,
+                      { normalizeLocale: false },
+                    )}
+                    class="hover:text-primary transition-colors"
+                  >
+                    {pageState.systemName}
+                  </a>
+                ) : (
+                  <span>{pageState.systemName}</span>
+                )}
+                <span class="text-muted-foreground font-normal">@</span>
+                <a
+                  href={getRelativeLocaleUrl("en", `boards/${params.board}`, {
+                    normalizeLocale: false,
+                  })}
+                  class="hover:text-primary transition-colors"
+                >
+                  {pageState.boardName}
+                </a>
+                <span class="text-muted-foreground font-normal">
+                  Test Report
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div>
-                    <h3 class="text-sm font-medium text-muted-foreground">
-                      System Version
-                    </h3>
-                    <p class="text-lg">{pageState.report?.version ?? "-"}</p>
-                  </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 pb-6 border-b border-border/60">
                   <div>
                     <h3 class="text-sm font-medium text-muted-foreground">
                       Status
                     </h3>
-                    <p class="text-lg">{pageState.report?.status ?? "-"}</p>
+                    <div class="mt-1">
+                      <span
+                        class={`inline-flex items-center px-2.5 py-0.5 rounded-md font-semibold text-sm ${statusClass}`}
+                      >
+                        {pageState.report?.status ?? "-"}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-medium text-muted-foreground">
+                      System Version
+                    </h3>
+                    <p class="text-lg mt-0.5">
+                      {pageState.report?.version ?? "-"}
+                    </p>
                   </div>
                   {pageState.report?.variant && (
                     <div>
                       <h3 class="text-sm font-medium text-muted-foreground">
                         System Variant
                       </h3>
-                      <p class="text-lg">{pageState.report?.variant}</p>
+                      <p class="text-lg mt-0.5">{pageState.report.variant}</p>
                     </div>
                   )}
                   <div>
                     <h3 class="text-sm font-medium text-muted-foreground">
                       Last Update
                     </h3>
-                    <p class="text-lg">
+                    <p class="text-lg mt-0.5">
                       {pageState.report?.lastUpdate
-                        ? pageState.report.lastUpdate.toLocaleDateString()
+                        ? pageState.report.lastUpdate.toLocaleDateString(
+                            "en-US",
+                          )
                         : "-"}
                     </p>
                   </div>
                 </div>
                 <div
-                  class="prose prose-slate prose-h1:hidden dark:prose-invert max-w-none 
+                  class="prose prose-slate prose-h1:hidden dark:prose-invert max-w-none
             prose-pre:whitespace-pre-wrap prose-pre:word-break-normal prose-pre:break-words
             prose-a:break-words prose-a:overflow-wrap-anywhere prose-a:word-break-all"
                 >
@@ -221,7 +270,7 @@ const title =
                 href={`https://github.com/ruyisdk/support-matrix/blob/main/${params.board}/${params.system}/${params.file}.md`}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="text-primary hover:underline"
+                class="text-primary hover:underline ml-1"
               >
                 Support Matrix
               </a>
